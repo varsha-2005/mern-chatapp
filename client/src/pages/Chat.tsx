@@ -1,24 +1,31 @@
 import { useChat } from "../context/Context";
 
 const Chat = ({ receiverId }: { receiverId: string | null }) => {
-  const { newMessage, setNewMessage, handleSendMessage, messages, loading, setReceiverId } = useChat();
+  const {
+    newMessage,
+    setNewMessage,
+    handleSendMessage,
+    messages,
+    loading,
+    setReceiverId,
+  } = useChat();
   const isSmallScreen = window.innerWidth < 768;
 
-  if (loading) return <div className="text-center text-gray-500">Loading chat...</div>;
+  if (loading)
+    return <div className="text-center text-gray-500">Loading chat...</div>;
 
   return (
-    <div className="w-full h-[675px] bg-white dark:bg-gray-900 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 mt-1 flex flex-col">
-
-      <div className="flex items-center p-4 border-b border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 rounded-t-xl shadow-sm">
+    <div className=" h-screen bg-white dark:bg-gray-900  shadow-lg border border-gray-200 dark:border-gray-700  flex flex-col">
+      <div className="flex items-center p-4 border-b border-gray-300  dark:border-gray-500 bg-gray-100 dark:bg-gray-800   ">
         {isSmallScreen && (
-          <button 
+          <button
             className="mr-3 text-2xl text-gray-700 dark:text-gray-100"
             onClick={() => setReceiverId(null)}
           >
             ⬅
           </button>
         )}
-        <div className="h-12 w-12 rounded-full bg-gray-300 dark:bg-gray-600 overflow-hidden border">
+        <div className="h-12 w-12 rounded-full bg-gray-300 dark:bg-gray-800 overflow-hidden border">
           <img
             src={receiverId?.avatarUrl || "vite.svg"}
             alt="User Avatar"
@@ -34,7 +41,11 @@ const Chat = ({ receiverId }: { receiverId: string | null }) => {
         {messages.map((msg, idx) => (
           <div
             key={idx}
-            className={`flex ${msg.receiver._id === receiverId?._id ? "justify-end" : "justify-start"}`}
+            className={`flex ${
+              msg.receiver._id === receiverId?._id
+                ? "justify-end"
+                : "justify-start"
+            }`}
           >
             <div
               className={`p-3 rounded-lg max-w-xs shadow-md ${
@@ -43,9 +54,9 @@ const Chat = ({ receiverId }: { receiverId: string | null }) => {
                   : "bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
               }`}
             >
-              <p className="font-semibold">{msg.sender?.name || "Unknown"}</p>
+              {/* <p className="font-semibold">{msg.sender?.name || "Unknown"}</p> */}
               <p>{msg.message}</p>
-              <span className="text-xs text-gray-400 dark:text-gray-300 block mt-1">
+              <span className="text-[9px] text-right text-black-500 dark:text-slate-300 block mt-1">
                 {new Date(msg.timestamp).toLocaleTimeString()}
               </span>
             </div>
@@ -53,22 +64,21 @@ const Chat = ({ receiverId }: { receiverId: string | null }) => {
         ))}
       </div>
 
-      <div className="p-4 border-t bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 flex items-center space-x-3 rounded-b-xl">
+      <div className="p-4 border-t bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 flex items-center space-x-3 rounded-b-xl ">
         <input
           type="text"
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
           placeholder="Type your message..."
-          className="p-2 w-full border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+          className="p-2  sm:w-[85%] w-[80%] border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-gray-400 transition bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
         />
         <button
-          onClick={handleSendMessage}
-          className="text-white bg-green-500 dark:bg-green-600 p-2 px-4 rounded-md hover:bg-green-600 dark:hover:bg-green-700 transition"
+          onClick={(e) => handleSendMessage(e)}
+          className=" sm:w-[15%] w-[20%]  text-white bg-green-500 dark:bg-green-600 p-2 px-4 rounded-md hover:bg-green-600 dark:hover:bg-green-700 transition "
         >
           Send
         </button>
       </div>
-
     </div>
   );
 };
