@@ -1,5 +1,6 @@
 import { Link, } from "react-router-dom";
 import { useChat } from "../context/Context";
+import { ToastContainer } from "react-toastify";
 
 export default function SignUp() {
     const {name, setName,email, setEmail, password, setPassword, loading, handleSignUp, message} = useChat();
@@ -32,6 +33,7 @@ export default function SignUp() {
                     </p>
                 </form>
             </div>
+            <ToastContainer />
         </div>
     );
 }
