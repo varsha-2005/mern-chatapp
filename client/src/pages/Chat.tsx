@@ -11,11 +11,15 @@ const Chat = ({ receiverId }: { receiverId: string | null }) => {
   } = useChat();
   const isSmallScreen = window.innerWidth < 768;
 
-  if (loading)
-    return <div className="text-center text-gray-500">Loading chat...</div>;
+  if (messages.length == 0)
+    return (
+      <div className="text-center text-gray-500 dark:bg-gray-900 h-screen">
+        Loading chat...
+      </div>
+    );
 
   return (
-    <div className=" min-h-screen bg-white dark:bg-gray-900  shadow-lg border border-gray-200 dark:border-gray-700  flex flex-col">
+    <div className=" h-screen bg-white dark:bg-gray-900  shadow-lg border border-gray-200 dark:border-gray-700  flex flex-col">
       <div className="flex items-center p-4 border-b border-gray-300  dark:border-gray-500 bg-gray-100 dark:bg-gray-800   ">
         {isSmallScreen && (
           <button
@@ -37,7 +41,7 @@ const Chat = ({ receiverId }: { receiverId: string | null }) => {
         </div>
       </div>
 
-      <div className="p-4 space-y-3 overflow-y-auto flex-grow w-full bg-gray-50 dark:bg-gray-800">
+      <div className="p-4 space-y-3 overflow-y-auto flex-grow w-full bg-gray-50 dark:bg-gray-800 ">
         {messages.map((msg, idx) => (
           <div
             key={idx}
