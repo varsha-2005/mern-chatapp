@@ -1,35 +1,40 @@
 import { useEffect, useRef, useState } from "react";
 import { useChat } from "../context/Context";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowLeft } from "@fortawesome/free-solid-svg-icons";
+import {
+  faArrowLeft,
+  faArrowsRotate,
+  faX,
+} from "@fortawesome/free-solid-svg-icons";
 import { ToastContainer } from "react-toastify";
 
 const Chat = ({ receiverId }: { receiverId: string | null }) => {
-  const {
-    newMessage,
-    setNewMessage,
-    handleSendMessage,
-    messages,
-    loading,
-    setReceiverId,
-  } = useChat();
+  const { handleSendMessage, messages, loading, setReceiverId, fetchMessages } =
+    useChat();
   const isSmallScreen = window.innerWidth < 768;
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const [scroll, setScroll] = useState(false);
+  const [currentMessage, setCurrentMessage] = useState("");
+  const [toggle, setToggle] = useState(false);
 
+  const handleToggle = () => {
+    setToggle(!toggle);
+  };
 
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollTop = messagesEndRef.current.scrollHeight;
     }
-  }, [messagesEndRef.current]);
+  }, [messages]);
 
   useEffect(() => {
     const container = messagesEndRef.current;
     if (!container) return;
 
     const handleScroll = () => {
-      const atBottom = container.scrollHeight - container.scrollTop === container.clientHeight + 50;
+      const atBottom =
+        container.scrollHeight - container.scrollTop ===
+        container.clientHeight + 50;
       setScroll(!atBottom);
     };
 
@@ -43,7 +48,6 @@ const Chat = ({ receiverId }: { receiverId: string | null }) => {
     messagesEndRef.current.scrollTop = messagesEndRef.current.scrollHeight;
   }, [messages]);
 
-
   if (messages.length == 0)
     return (
       <div className="text-center text-gray-500 dark:bg-gray-900 h-screen">
@@ -51,23 +55,75 @@ const Chat = ({ receiverId }: { receiverId: string | null }) => {
       </div>
     );
 
+  const SendMessage = (e) => {
+    if (e.key === "Enter" || e.type === "click") {
+      if (currentMessage !== "") {
+        handleSendMessage(currentMessage);
+        setCurrentMessage("");
+        fetchMessages();
+      } else {
+        alert("Please enter a message");
+      }
+    }
+  };
+
   return (
     <div className=" h-screen bg-white dark:bg-gray-900  shadow-lg border border-gray-200 dark:border-gray-700  flex flex-col">
-      <div className="flex items-center p-4 border-b border-gray-300  dark:border-gray-500 bg-gray-100 dark:bg-gray-800   ">
+      <div className="flex items-center justify-between p-4 border-b border-gray-300  dark:border-gray-500 bg-gray-100 dark:bg-gray-800   ">
         {isSmallScreen && (
-          <button className="mr-3 text-2xl text-gray-700 dark:text-gray-100" onClick={() => setReceiverId(null)}>
+          <button
+            className="mr-3 text-2xl text-gray-700 dark:text-gray-100"
+            onClick={() => setReceiverId(null)}
+          >
             <FontAwesomeIcon icon={faArrowLeft} />
           </button>
         )}
-        <div className="h-12 w-12 rounded-full bg-gray-300 dark:bg-gray-800 overflow-hidden border">
+        <div
+          className="h-12 w-12 rounded-full bg-gray-300 dark:bg-gray-800  border flex items-center "
+          onClick={handleToggle}
+        >
+          {toggle && (
+            <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50 z-50">
+              <div className="relative bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg w-80 sm:w-96 border border-gray-300 dark:border-gray-700">
+                {/* Close Button */}
+                <FontAwesomeIcon icon={faX} />
+
+                {/* User Info */}
+                <div className="flex flex-col items-center space-y-3">
+                  <img
+                    src={receiverId?.avatarUrl || "vite.svg"}
+                    alt="User Avatar"
+                    className="w-20 h-20 rounded-full object-cover border"
+                  />
+                  <div className="text-lg font-semibold text-gray-700 dark:text-gray-100">
+                    {receiverId?.name || "User"}
+                  </div>
+                  <div className="text-gray-600 dark:text-gray-300">
+                    {receiverId?.email || "No email"}
+                  </div>
+                  <div className="text-gray-500 dark:text-gray-400">
+                    {receiverId?.status || "No status available"}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           <img
             src={receiverId?.avatarUrl || "vite.svg"}
             alt="User Avatar"
             className="w-full h-full object-cover"
           />
+          <div className="ml-3 text-lg font-semibold text-gray-700 dark:text-gray-100">
+            {receiverId?.name || "User"}
+          </div>
         </div>
-        <div className="ml-3 text-lg font-semibold text-gray-700 dark:text-gray-100">
-          {receiverId?.name || "User"}
+
+        <div
+          onClick={() => fetchMessages()}
+          className="text-gray-700 dark:text-gray-100 cursor-pointer hover:scale-125"
+        >
+          <FontAwesomeIcon icon={faArrowsRotate} />
         </div>
       </div>
 
@@ -75,16 +131,18 @@ const Chat = ({ receiverId }: { receiverId: string | null }) => {
         {messages.map((msg, idx) => (
           <div
             key={idx}
-            className={`flex ${msg.receiver._id === receiverId?._id
-              ? "justify-end"
-              : "justify-start"
-              }`}
+            className={`flex ${
+              msg.receiver._id === receiverId?._id
+                ? "justify-end"
+                : "justify-start"
+            }`}
           >
             <div
-              className={`p-3 rounded-lg max-w-xs shadow-md ${msg.receiver._id === receiverId?._id
-                ? "bg-blue-500 dark:bg-blue-600 text-white"
-                : "bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
-                }`}
+              className={`p-3 rounded-lg max-w-screen-md shadow-md ${
+                msg.receiver._id === receiverId?._id
+                  ? "bg-blue-500 dark:bg-blue-600 text-white"
+                  : "bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+              }`}
             >
               {/* <p className="font-semibold">{msg.sender?.name || "Unknown"}</p> */}
               <p>{msg.message}</p>
@@ -99,13 +157,14 @@ const Chat = ({ receiverId }: { receiverId: string | null }) => {
       <div className="p-4 border-t bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 flex items-center space-x-3 rounded-b-xl ">
         <input
           type="text"
-          value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
+          value={currentMessage}
+          onKeyDown={(e) => SendMessage(e)}
+          onChange={(e) => setCurrentMessage(e.target.value)}
           placeholder="Type your message..."
           className="p-2  sm:w-[85%] w-[80%] border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-gray-400 transition bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
         />
         <button
-          onClick={(e) => handleSendMessage(e).then(() => setNewMessage(""))}
+          onClick={(e) => SendMessage(e)}
           className=" sm:w-[15%] w-[20%]  text-white bg-green-500 dark:bg-green-600 p-2 px-4 rounded-md hover:bg-green-600 dark:hover:bg-green-700 transition "
         >
           Send

@@ -1,5 +1,7 @@
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useChat } from "../context/Context";
 import { ToastContainer } from "react-toastify";
+import { faX } from "@fortawesome/free-solid-svg-icons";
 
 const Member = ({
   setReceiverId,
@@ -16,18 +18,25 @@ const Member = ({
 
   return (
     <div className="sm:w-full   max-h-screen overflow-y-scroll bg-white dark:bg-gray-800  shadow-lg  border border-gray-200 dark:border-gray-700 p-4">
-      <input
-        type="text"
-        placeholder="Search users..."
-        className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-400 dark:focus:ring-gray-500 transition bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 outline-none"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-      />
+      <div className="relative w-full">
+        <input
+          type="text"
+          placeholder="Search users..."
+          className="w-full p-2 pr-10 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-400 dark:focus:ring-gray-500 transition bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 outline-none"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+        <FontAwesomeIcon
+          icon={faX}
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 cursor-pointer"
+          onClick={() => setSearch("")} // Clears input when clicked
+        />
+      </div>
 
       <h2 className="text-xl font-semibold my-4 text-gray-700 dark:text-gray-100 border-b border-gray-300 dark:border-gray-700 pb-2">
         People
       </h2>
-      <div className="space-y-2 max-h-screen  overflow-scroll pr-2">
+      <div className="space-y-2 max-h-screen  overflow-scroll pr-2 ">
         {filteredUsers.length > 0 ? (
           filteredUsers.map((user) => (
             <div

@@ -1,9 +1,4 @@
-import {
-  createContext,
-  useState,
-  useContext,
-  useEffect,
-} from "react";
+import { createContext, useState, useContext, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { showToastSuccess, showToastError } from "../components/toast";
@@ -99,7 +94,6 @@ const Context = ({ children }: Props) => {
       document.documentElement.classList.remove("dark");
     }
   }, [darkMode]);
-
 
   const navigate = useNavigate();
   const [token, setToken] = useState(localStorage.getItem("token"));
@@ -322,26 +316,23 @@ const Context = ({ children }: Props) => {
     fetchMessages();
   }, [token, receiverId, messages]);
 
-  const handleSendMessage = async () => {
-    if (!newMessage.trim()) {
+  const handleSendMessage = async (currentMessage: string) => {
+    if (!currentMessage.trim()) {
       showToastError("Please enter something!");
       return;
     }
-    if (!newMessage || !token || !receiverId) return;
+    if (!currentMessage || !token || !receiverId) return;
     try {
       const response = await axios.post(`${path}/chat/sendmessages`, {
-        receiver: receiverId,
-        message: newMessage
-      })
+        receiver: receiverId._id,
+        message: currentMessage,
+      });
       setMessages(response.data);
       fetchMessages();
-      setNewMessage("");
-
-
     } catch (error) {
       console.error("Error sending message:", error);
     }
-  }
+  };
 
   // const handleResetPassword = async (e: React.FormEvent<HTMLFormElement>) => {
   //     e.preventDefault();
