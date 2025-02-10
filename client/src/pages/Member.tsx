@@ -1,6 +1,12 @@
 import { useChat } from "../context/Context";
 
-const Member = ({ setReceiverId }: { setReceiverId: (id: string) => void }) => {
+const Member = ({
+  setReceiverId,
+  receiverId,
+}: {
+  setReceiverId: (id: string) => void;
+  receiverId: string;
+}) => {
   const { search, setSearch, users } = useChat();
 
   const filteredUsers = users.filter((user) =>
@@ -26,7 +32,11 @@ const Member = ({ setReceiverId }: { setReceiverId: (id: string) => void }) => {
             <div
               key={user._id}
               onClick={() => setReceiverId(user)}
-              className="flex items-center p-3 rounded-lg hover:bg-blue-50 dark:hover:bg-gray-700 transition cursor-pointer border-b-2  shadow-sm border-gray-200 dark:border-gray-700"
+              className={`flex items-center p-3 rounded-lg hover:bg-blue-50 dark:hover:bg-gray-700 transition cursor-pointer  shadow-sm border-gray-200 dark:border-gray-700 ${
+                receiverId && receiverId._id == user._id
+                  ? "border-l-4 border-blue-500 dark:border-blue-600"
+                  : ""
+              }`}
             >
               <div className="w-12 h-12 rounded-full bg-gray-300 dark:bg-gray-700 overflow-hidden border border-gray-400 dark:border-gray-600">
                 <img

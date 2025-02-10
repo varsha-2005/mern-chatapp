@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+
 import {
   faHome,
   faComment,
@@ -9,6 +10,7 @@ import {
   faCog,
   faMoon,
   faSun,
+  faRocket,
 } from "@fortawesome/free-solid-svg-icons";
 import { Link } from "react-router-dom";
 import { useChat } from "../context/Context";
@@ -28,7 +30,10 @@ const Header = () => {
                             bg-gradient-to-r from-purple-500 to-indigo-600 dark:from-gray-800 dark:to-gray-900 
                             text-white font-extralight text-xs p-2 z-10 h-12 shadow-md"
       >
-        <h1 className="text-2xl font-mono pl-4">Chat App</h1>
+        <div className="flex  items-center">
+          <FontAwesomeIcon icon={faRocket} bounce className="h-8" />
+          <h1 className="text-2xl font-mono pl-4">Chat App</h1>
+        </div>
 
         <div className="flex items-center space-x-4">
           <button
@@ -50,9 +55,9 @@ const Header = () => {
 
       <div
         className={`fixed left-0 top-12 w-24 h-full z-20 
-                            bg-gradient-to-r from-purple-500 to-indigo-600 dark:from-gray-800 dark:to-gray-800  
+                            bg-gradient-to-b from-purple-500 to-indigo-600 dark:from-gray-800 dark:to-gray-800  
                             text-white dark:text-gray-200 text-2xl font-extrabold 
-                             p-4 border-gray-300 dark:border-gray-700 opacity-95 
+                             p-4 border-gray-300 dark:border-gray-700 opacity-90
                             transition-transform duration-300 ease-in-out ${
                               toggle ? "translate-x-0" : "-translate-x-full"
                             }`}

@@ -24,7 +24,7 @@ const Main = () => {
           isSmallScreen && receiverId ? "hidden" : "block"
         } w-full lg:w-[40%]`}
       >
-        <Member setReceiverId={setReceiverId} />
+        <Member setReceiverId={setReceiverId} receiverId={receiverId} />
       </div>
 
       <div

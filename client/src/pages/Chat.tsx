@@ -15,7 +15,7 @@ const Chat = ({ receiverId }: { receiverId: string | null }) => {
     return <div className="text-center text-gray-500">Loading chat...</div>;
 
   return (
-    <div className=" h-screen bg-white dark:bg-gray-900  shadow-lg border border-gray-200 dark:border-gray-700  flex flex-col">
+    <div className=" min-h-screen bg-white dark:bg-gray-900  shadow-lg border border-gray-200 dark:border-gray-700  flex flex-col">
       <div className="flex items-center p-4 border-b border-gray-300  dark:border-gray-500 bg-gray-100 dark:bg-gray-800   ">
         {isSmallScreen && (
           <button
@@ -73,7 +73,7 @@ const Chat = ({ receiverId }: { receiverId: string | null }) => {
           className="p-2  sm:w-[85%] w-[80%] border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-gray-400 transition bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
         />
         <button
-          onClick={(e) => handleSendMessage(e)}
+          onClick={(e) => handleSendMessage(e).then(() => setNewMessage(""))}
           className=" sm:w-[15%] w-[20%]  text-white bg-green-500 dark:bg-green-600 p-2 px-4 rounded-md hover:bg-green-600 dark:hover:bg-green-700 transition "
         >
           Send

@@ -344,6 +344,8 @@ const Context = ({ children }: Props) => {
   }, [token, receiverId, messages]);
 
   const handleSendMessage = async (e: any) => {
+    console.log(e);
+
     if (!newMessage || !token || !receiverId) {
       alert("Error sending message.");
       return;
@@ -351,7 +353,7 @@ const Context = ({ children }: Props) => {
 
     if (e.type === "click" || (e.type === "keydown" && e.key === "Enter")) {
       try {
-        const response = await axios.post(
+        await axios.post(
           `${path}/chat/sendmessages`,
           {
             receiver: receiverId._id,
@@ -365,7 +367,7 @@ const Context = ({ children }: Props) => {
         );
 
         fetchMessages();
-        setNewMessage("");
+        console.log("Sent message" + newMessage);
 
         if (socket) {
           socket.emit("sendMessage", {
@@ -373,6 +375,7 @@ const Context = ({ children }: Props) => {
             message: newMessage,
           });
         }
+        setNewMessage((e.target.value = ""));
       } catch (error) {
         console.error("Error sending message:", error);
       }
