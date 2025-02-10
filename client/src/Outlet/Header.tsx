@@ -27,7 +27,7 @@ const Header = () => {
   return (
     <div className={darkMode ? "dark" : ""}>
       <div
-        className="flex justify-between fixed top-0 left-0 items-center w-full 
+        className="flex justify-between fixed top-0 items-center w-full 
                             bg-gradient-to-r from-purple-500 to-indigo-600 dark:from-gray-800 dark:to-gray-900 
                             text-white font-extralight text-xs p-2 z-10 h-12 shadow-md"
       >
@@ -59,10 +59,11 @@ const Header = () => {
                             bg-gradient-to-b from-purple-500 to-indigo-600 dark:from-gray-800 dark:to-gray-800  
                             text-white dark:text-gray-200 text-2xl font-extrabold  
                              p-4 border-gray-300 dark:border-gray-700 opacity-90
-                            transition-transform duration-300 ease-in-out ${toggle ? "translate-x-0" : "-translate-x-full"
-          }`}
+                            transition-transform duration-300 ease-in-out ${
+                              toggle ? "translate-x-0" : "-translate-x-full"
+                            }`}
       >
-        <ul className="" >
+        <ul className="">
           <li className="border dark:border-gray-500 rounded-full w-16 h-16 flex items-center justify-center">
             <div className="w-full h-full rounded-full overflow-hidden">
               <img
