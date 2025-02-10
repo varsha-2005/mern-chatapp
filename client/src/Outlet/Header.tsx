@@ -27,7 +27,7 @@ const Header = () => {
   return (
     <div className={darkMode ? "dark" : ""}>
       <div
-        className="flex justify-between fixed top-0 items-center w-full 
+        className="flex justify-between  items-center w-full 
                             bg-gradient-to-r from-purple-500 to-indigo-600 dark:from-gray-800 dark:to-gray-900 
                             text-white font-extralight text-xs p-2 z-10 h-12 shadow-md"
       >

@@ -1,18 +1,18 @@
-import { Outlet } from 'react-router-dom'
-import Header from './Header'
-import { useChat } from '../context/Context'
+import { Outlet } from "react-router-dom";
+import Header from "./Header";
+import { useChat } from "../context/Context";
 const Layout = () => {
-  const {darkMode} = useChat()
+  const { darkMode } = useChat();
   return (
-    <div className={darkMode ? "dark" : " " }>
-      <div className='dark:bg-black'>
+    <div className={darkMode ? "dark" : " "}>
+      <div className="dark:bg-black">
         <Header />
       </div>
-      <div className='mt-12'>
+      <div className="">
         <Outlet />
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Layout
+export default Layout;
