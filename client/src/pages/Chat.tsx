@@ -1,4 +1,8 @@
+import { useEffect, useRef, useState } from "react";
 import { useChat } from "../context/Context";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faArrowLeft } from "@fortawesome/free-solid-svg-icons";
+import { ToastContainer } from "react-toastify";
 
 const Chat = ({ receiverId }: { receiverId: string | null }) => {
   const {
@@ -10,6 +14,35 @@ const Chat = ({ receiverId }: { receiverId: string | null }) => {
     setReceiverId,
   } = useChat();
   const isSmallScreen = window.innerWidth < 768;
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const [scroll, setScroll] = useState(false);
+
+
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollTop = messagesEndRef.current.scrollHeight;
+    }
+  }, [messagesEndRef.current]);
+
+  useEffect(() => {
+    const container = messagesEndRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      const atBottom = container.scrollHeight - container.scrollTop === container.clientHeight + 50;
+      setScroll(!atBottom);
+    };
+
+    container.addEventListener("scroll", handleScroll);
+    return () => container.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  useEffect(() => {
+    if (!messagesEndRef.current || scroll) return;
+
+    messagesEndRef.current.scrollTop = messagesEndRef.current.scrollHeight;
+  }, [messages]);
+
 
   if (messages.length == 0)
     return (
@@ -22,11 +55,8 @@ const Chat = ({ receiverId }: { receiverId: string | null }) => {
     <div className=" h-screen bg-white dark:bg-gray-900  shadow-lg border border-gray-200 dark:border-gray-700  flex flex-col">
       <div className="flex items-center p-4 border-b border-gray-300  dark:border-gray-500 bg-gray-100 dark:bg-gray-800   ">
         {isSmallScreen && (
-          <button
-            className="mr-3 text-2xl text-gray-700 dark:text-gray-100"
-            onClick={() => setReceiverId(null)}
-          >
-            ⬅
+          <button className="mr-3 text-2xl text-gray-700 dark:text-gray-100" onClick={() => setReceiverId(null)}>
+            <FontAwesomeIcon icon={faArrowLeft} />
           </button>
         )}
         <div className="h-12 w-12 rounded-full bg-gray-300 dark:bg-gray-800 overflow-hidden border">
@@ -45,18 +75,16 @@ const Chat = ({ receiverId }: { receiverId: string | null }) => {
         {messages.map((msg, idx) => (
           <div
             key={idx}
-            className={`flex ${
-              msg.receiver._id === receiverId?._id
-                ? "justify-end"
-                : "justify-start"
-            }`}
+            className={`flex ${msg.receiver._id === receiverId?._id
+              ? "justify-end"
+              : "justify-start"
+              }`}
           >
             <div
-              className={`p-3 rounded-lg max-w-xs shadow-md ${
-                msg.receiver._id === receiverId?._id
-                  ? "bg-blue-500 dark:bg-blue-600 text-white"
-                  : "bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
-              }`}
+              className={`p-3 rounded-lg max-w-xs shadow-md ${msg.receiver._id === receiverId?._id
+                ? "bg-blue-500 dark:bg-blue-600 text-white"
+                : "bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+                }`}
             >
               {/* <p className="font-semibold">{msg.sender?.name || "Unknown"}</p> */}
               <p>{msg.message}</p>
@@ -83,6 +111,7 @@ const Chat = ({ receiverId }: { receiverId: string | null }) => {
           Send
         </button>
       </div>
+      <ToastContainer />
     </div>
   );
 };

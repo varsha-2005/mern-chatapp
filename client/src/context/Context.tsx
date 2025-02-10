@@ -3,11 +3,9 @@ import {
   useState,
   useContext,
   useEffect,
-  ReactEventHandler,
 } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { io, Socket } from "socket.io-client";
 import { showToastSuccess, showToastError } from "../components/toast";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -56,6 +54,7 @@ interface ChatContextType {
   handleSendMessage: any;
   fetchMessages: any;
   toggleDarkMode: () => void;
+  handleLogout: () => void;
 }
 
 type Props = {
@@ -101,33 +100,20 @@ const Context = ({ children }: Props) => {
     }
   }, [darkMode]);
 
-  const [socket, setSocket] = useState<Socket | null>(null);
+
   const navigate = useNavigate();
+  const [token, setToken] = useState(localStorage.getItem("token"));
 
   useEffect(() => {
-    const newSocket = io("http://localhost:5001", {
-      transports: ["polling", "websocket"],
-    });
-    setSocket(newSocket);
-    return () => {
-      newSocket.disconnect();
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!socket) return;
-
-    const handleMessage = (message: Message) => {
-      setMessages((prev) => [...prev, message]);
-    };
-
-    socket.on("receiveMessage", handleMessage);
-
-    return () => {
-      socket.off("receiveMessage", handleMessage);
-    };
-  }, [socket]);
-  const token = localStorage.getItem("token");
+    if (token) {
+      axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+    } else {
+      delete axios.defaults.headers.common["Authorization"];
+      if (location.pathname !== "/register") {
+        navigate("/login");
+      }
+    }
+  }, [token]);
 
   const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -135,11 +121,7 @@ const Context = ({ children }: Props) => {
     setMessage("");
 
     try {
-      const response = await axios.post(`${path}/auth/register`, {
-        name,
-        email,
-        password,
-      });
+      const response = await axios.post(`${path}/auth/register`);
 
       const { token, message } = response.data;
       setMessage(message);
@@ -172,6 +154,15 @@ const Context = ({ children }: Props) => {
     }
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    setUser(null);
+    setToken(null);
+    axios.defaults.headers.common["Authorization"] = "";
+    navigate("/login");
+  };
+
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
@@ -185,17 +176,11 @@ const Context = ({ children }: Props) => {
       const { token, message } = response.data;
       setMessage(message);
 
-      const userResponse = await axios.get(`${path}/auth/fetchuser`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const userResponse = await axios.get(`${path}/auth/fetchuser`);
 
       console.log("Fetched User:", userResponse.data);
       setUser(userResponse.data);
-      localStorage.setItem("user", JSON.stringify(userResponse.data));
       navigate("/");
-
       localStorage.setItem("token", token);
       axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
       // setUser(user);
@@ -300,11 +285,7 @@ const Context = ({ children }: Props) => {
   const fetchUsers = useEffect(() => {
     const fetchUser = async () => {
       try {
-        const response = await axios.get(`${path}/auth/fetchuser`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const response = await axios.get(`${path}/auth/fetchuser`);
         // console.log(response.data);
         setUsers(response.data);
       } catch (error) {
@@ -330,10 +311,8 @@ const Context = ({ children }: Props) => {
       );
 
       setMessages(response.data);
-      // console.log(response.data);
     } catch (error) {
       console.error("Error fetching messages:", error);
-      // setError("An error occurred.");
     } finally {
       setLoading(false);
     }
@@ -343,44 +322,26 @@ const Context = ({ children }: Props) => {
     fetchMessages();
   }, [token, receiverId, messages]);
 
-  const handleSendMessage = async (e: any) => {
-    console.log(e);
-
-    if (!newMessage || !token || !receiverId) {
-      alert("Error sending message.");
+  const handleSendMessage = async () => {
+    if (!newMessage.trim()) {
+      showToastError("Please enter something!");
       return;
     }
+    if (!newMessage || !token || !receiverId) return;
+    try {
+      const response = await axios.post(`${path}/chat/sendmessages`, {
+        receiver: receiverId,
+        message: newMessage
+      })
+      setMessages(response.data);
+      fetchMessages();
+      setNewMessage("");
 
-    if (e.type === "click" || (e.type === "keydown" && e.key === "Enter")) {
-      try {
-        await axios.post(
-          `${path}/chat/sendmessages`,
-          {
-            receiver: receiverId._id,
-            message: newMessage,
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
 
-        fetchMessages();
-        console.log("Sent message" + newMessage);
-
-        if (socket) {
-          socket.emit("sendMessage", {
-            receiverId: receiverId._id,
-            message: newMessage,
-          });
-        }
-        setNewMessage((e.target.value = ""));
-      } catch (error) {
-        console.error("Error sending message:", error);
-      }
+    } catch (error) {
+      console.error("Error sending message:", error);
     }
-  };
+  }
 
   // const handleResetPassword = async (e: React.FormEvent<HTMLFormElement>) => {
   //     e.preventDefault();
@@ -437,6 +398,7 @@ const Context = ({ children }: Props) => {
         setError,
         fetchUsers,
         handleUpdate,
+        handleLogout,
         newMessage,
         setNewMessage,
         handleSendMessage,

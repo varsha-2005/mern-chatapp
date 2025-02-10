@@ -7,6 +7,7 @@ import Layout from './Outlet/Layout';
 import Main from './pages/Main';
 import Settings from './pages/Settings';
 import ForgotPassword from './pages/ForgotPassword';
+import ProtectedRoute from './pages/ProtectedRoute';
 
 function App() {
 
@@ -17,9 +18,11 @@ function App() {
         <Route path='/signup' element={<Signup />} />
         <Route path='/login' element={<Login />} />
         <Route path='/forgot' element={<ForgotPassword />} />
-        <Route path='/' element={<Layout />} >
-          <Route path='/' element={<Main /> }  />
-          <Route path='/settings' element={<Settings /> }  />
+        <Route path='/' element={<ProtectedRoute />}  >
+          <Route path='/' element={<Layout />} >
+            <Route index element={<Main />} />
+            <Route path='/settings' element={<Settings />} />
+          </Route>
         </Route>
       </Routes>
     </Context>

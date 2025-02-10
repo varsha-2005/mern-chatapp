@@ -11,13 +11,6 @@ export default function Login() {
                 <h1 className="text-2xl font-bold mb-6 text-center text-gray-900">Login</h1>
                 {message && <div className={`message ${message.includes("success") ? "success" : "error"}`}>{message}</div>}
                 <form className="flex flex-col gap-4" onSubmit={handleLogin} >
-                    <button className="flex items-center justify-center gap-2 px-4 py-2 border rounded-md text-sm font-medium transition-all hover:bg-gray-200 w-full">
-                        🌐 Continue with Google
-                    </button>
-                    <button className="flex items-center justify-center gap-2 px-4 py-2 border rounded-md text-sm font-medium transition-all hover:bg-gray-200 w-full">
-                        📘 Continue with Facebook
-                    </button>
-                    <p className="text-center text-sm my-2 text-gray-600">or</p>
 
                     <input
                         type="email"
