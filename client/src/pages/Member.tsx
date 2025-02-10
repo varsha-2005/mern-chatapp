@@ -36,7 +36,7 @@ const Member = ({
       <h2 className="text-xl font-semibold my-4 text-gray-700 dark:text-gray-100 border-b border-gray-300 dark:border-gray-700 pb-2">
         People
       </h2>
-      <div className="space-y-2 max-h-screen  overflow-scroll pr-2 ">
+      <div className="space-y-2 min-h-screen  overflow-scroll pr-2 bg-white dark:bg-gray-800">
         {filteredUsers.length > 0 ? (
           filteredUsers.map((user) => (
             <div
@@ -44,7 +44,7 @@ const Member = ({
               onClick={() => setReceiverId(user)}
               className={`flex items-center p-3 rounded-lg hover:bg-blue-50 dark:hover:bg-gray-700 transition cursor-pointer  shadow-md darK:shadow-lg border-gray-200 dark:border-gray-700 ${
                 receiverId && receiverId._id == user._id
-                  ? "border-l-4 border-purple-500 dark:border-blue-500"
+                  ? "border-l-4 border-purple-500 dark:border-blue-600"
                   : ""
               }`}
             >

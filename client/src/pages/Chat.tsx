@@ -50,8 +50,8 @@ const Chat = ({ receiverId }: { receiverId: string | null }) => {
 
   if (messages.length == 0)
     return (
-      <div className="text-center text-gray-500 dark:bg-gray-900 h-screen">
-        Loading chat...
+      <div className="text-center text-gray-500 dark:bg-gray-800 h-screen flex justify-center items-center">
+        No chats found...........
       </div>
     );
 
@@ -69,6 +69,11 @@ const Chat = ({ receiverId }: { receiverId: string | null }) => {
 
   return (
     <div className=" h-screen bg-white dark:bg-gray-900  shadow-lg border border-gray-200 dark:border-gray-700  flex flex-col">
+      {loading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-800 bg-opacity-60 z-50">
+          <div className="w-16 h-16 border-4 border-blue-500 border-dashed rounded-full animate-spin"></div>
+        </div>
+      )}
       <div className="flex items-center justify-between p-4 border-b border-gray-300  dark:border-gray-500 bg-gray-100 dark:bg-gray-800   ">
         {isSmallScreen && (
           <button
@@ -138,14 +143,15 @@ const Chat = ({ receiverId }: { receiverId: string | null }) => {
             }`}
           >
             <div
-              className={`p-3 rounded-lg max-w-screen-md shadow-md ${
+              className={`p-3 rounded-lg shadow-md max-w-xs sm:max-w-md ${
                 msg.receiver._id === receiverId?._id
                   ? "bg-blue-500 dark:bg-blue-600 text-white"
                   : "bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
               }`}
             >
-              {/* <p className="font-semibold">{msg.sender?.name || "Unknown"}</p> */}
-              <p>{msg.message}</p>
+              <p className="break-words whitespace-pre-wrap overflow-auto max-h-32">
+                {msg.message}
+              </p>
               <span className="text-[9px] text-right text-black-500 dark:text-slate-300 block mt-1">
                 {new Date(msg.timestamp).toLocaleTimeString()}
               </span>

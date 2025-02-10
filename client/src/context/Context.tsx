@@ -295,6 +295,7 @@ const Context = ({ children }: Props) => {
       return;
     }
     try {
+      // setLoading(true);
       const response = await axios.get(
         `${path}/chat/messages/${receiverId._id}`,
         {
@@ -308,7 +309,7 @@ const Context = ({ children }: Props) => {
     } catch (error) {
       console.error("Error fetching messages:", error);
     } finally {
-      setLoading(false);
+      // setLoading(false); // Ensure loading is stopped after fetching messages
     }
   };
 
