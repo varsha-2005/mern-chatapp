@@ -9,8 +9,14 @@ import {
 import { ToastContainer } from "react-toastify";
 
 const Chat = ({ receiverId }: { receiverId: string | null }) => {
-  const { handleSendMessage, messages, loading, setReceiverId, fetchMessages, sendmsgload, setSendmsgload } =
-    useChat();
+  const {
+    handleSendMessage,
+    messages,
+    loading,
+    setReceiverId,
+    fetchMessages,
+    messgaeload,
+  } = useChat();
   const isSmallScreen = window.innerWidth < 768;
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const [scroll, setScroll] = useState(false);
@@ -45,22 +51,19 @@ const Chat = ({ receiverId }: { receiverId: string | null }) => {
     return () => container.removeEventListener("scroll", handleScroll);
   }, []);
 
-  if (messages.length == 0)
-    return (
-      <div className="text-center text-gray-500 dark:bg-gray-800 h-screen flex justify-center items-center">
-        No chats found...........
-      </div>
-    );
+  // if (messages.length == 0)
+  //   return (
+  //     <div className="text-center text-gray-500 dark:bg-gray-800 h-screen flex justify-center items-center">
+  //       No chats found...........
+  //     </div>
+  //   );
 
   const SendMessage = (e) => {
     if (e.key === "Enter" || e.type === "click") {
       if (currentMessage !== "") {
-        setSendmsgload(true);
-        handleSendMessage(currentMessage).then(() => {
-          setSendmsgload(false);
-          setCurrentMessage("");
-          fetchMessages();
-        });
+        handleSendMessage(currentMessage);
+        setCurrentMessage("");
+        fetchMessages();
       } else {
         alert("Please enter a message");
       }
@@ -89,13 +92,13 @@ const Chat = ({ receiverId }: { receiverId: string | null }) => {
         >
           {toggle && (
             <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50 z-50">
-              <div className="relative bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg w-80 sm:w-96 border border-gray-300 dark:border-gray-700">
+              <div className="relative bg-white rounded-lg dark:bg-gray-800 p-6  shadow-lg w-80 sm:w-96 border border-gray-300 dark:border-gray-700 ">
                 <FontAwesomeIcon icon={faX} />
-                <div className="flex flex-col items-center space-y-3">
+                <div className="flex flex-col items-center space-y-3 rounded-full">
                   <img
                     src={receiverId?.avatarUrl || "vite.svg"}
                     alt="User Avatar"
-                    className="w-20 h-20 rounded-full object-cover border"
+                    className="w-20 h-20 rounded-full object-cover border "
                   />
                   <div className="text-lg font-semibold text-gray-700 dark:text-gray-100">
                     {receiverId?.name || "User"}
@@ -114,7 +117,7 @@ const Chat = ({ receiverId }: { receiverId: string | null }) => {
           <img
             src={receiverId?.avatarUrl || "vite.svg"}
             alt="User Avatar"
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover rounded-full"
           />
           <div className="ml-3 text-lg font-semibold text-gray-700 dark:text-gray-100">
             {receiverId?.name || "User"}
@@ -137,16 +140,18 @@ const Chat = ({ receiverId }: { receiverId: string | null }) => {
         {messages.map((msg, idx) => (
           <div
             key={idx}
-            className={`flex ${msg.receiver._id === receiverId?._id
-              ? "justify-end"
-              : "justify-start"
-              }`}
+            className={`flex ${
+              msg.receiver._id === receiverId?._id
+                ? "justify-end"
+                : "justify-start"
+            }`}
           >
             <div
-              className={`p-3 rounded-lg shadow-md max-w-xs sm:max-w-md ${msg.receiver._id === receiverId?._id
-                ? "bg-blue-500 dark:bg-blue-600 text-white"
-                : "bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
-                }`}
+              className={`p-3 rounded-lg shadow-md max-w-xs sm:max-w-md ${
+                msg.receiver._id === receiverId?._id
+                  ? "bg-blue-500 dark:bg-blue-600 text-white"
+                  : "bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+              }`}
             >
               <p className="break-words whitespace-pre-wrap overflow-auto max-h-32">
                 {msg.message}
@@ -170,13 +175,9 @@ const Chat = ({ receiverId }: { receiverId: string | null }) => {
         />
         <button
           onClick={(e) => SendMessage(e)}
-          className="sm:w-[15%] w-[20%] text-white bg-green-500 dark:bg-green-600 p-2 px-4 rounded-md hover:bg-green-600 dark:hover:bg-green-700 transition flex items-center justify-center"
+          className="sm:w-[15%] w-[20%] text-white bg-green-500 dark:bg-green-600 p-2 px-4 rounded-md hover:bg-green-600 dark:hover:bg-green-700 transition"
         >
-          {sendmsgload ? (
-            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-          ) : (
-            "Send"
-          )}
+          Send
         </button>
       </div>
       <ToastContainer />

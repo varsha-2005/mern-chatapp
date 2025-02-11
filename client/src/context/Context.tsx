@@ -78,7 +78,6 @@ const Context = ({ children }: Props) => {
   const [status, setStatus] = useState<string | null>(null);
   const [newPassword, setNewPassword] = useState("");
 
-
   const [newMessage, setNewMessage] = useState("");
   const [darkMode, setDarkMode] = useState(() => {
     const savedDarkMode = localStorage.getItem("darkMode");
@@ -105,7 +104,7 @@ const Context = ({ children }: Props) => {
   const [token, setToken] = useState(localStorage.getItem("token"));
 
   useEffect(() => {
-    if (token) {
+    if (token !== "") {
       axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
     } else {
       delete axios.defaults.headers.common["Authorization"];
@@ -113,7 +112,7 @@ const Context = ({ children }: Props) => {
         navigate("/login");
       }
     }
-  }, [token]);
+  }, []);
 
   const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -122,7 +121,9 @@ const Context = ({ children }: Props) => {
 
     try {
       const response = await axios.post(`${path}/auth/register`, {
-        name, email, password
+        name,
+        email,
+        password,
       });
 
       const { token, message } = response.data;
@@ -158,7 +159,7 @@ const Context = ({ children }: Props) => {
 
   const handleLogout = () => {
     localStorage.removeItem("token");
-    localStorage.removeItem("user");
+
     setUser(null);
     setToken(null);
     axios.defaults.headers.common["Authorization"] = "";
@@ -175,17 +176,15 @@ const Context = ({ children }: Props) => {
         password,
       });
 
-      const { token, message } = response.data;
+      const newTken = response.data.token;
+      const message = response.data.message;
       setMessage(message);
 
-      const userResponse = await axios.get(`${path}/auth/fetchuser`);
-
-      console.log("Fetched User:", userResponse.data);
-      setUser(userResponse.data);
-      navigate("/");
-      localStorage.setItem("token", token);
+      localStorage.setItem("token", newTken);
+      setToken(newTken);
       axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-      // setUser(user);
+      navigate("/");
+
       showToastSuccess("Logged in successfully.");
       setTimeout(() => {
         navigate("/");
@@ -209,34 +208,11 @@ const Context = ({ children }: Props) => {
     }
   };
 
-  const ForgotPassword = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setLoading(true);
-    setMessage("");
-    try {
-      const response = await axios.post(`${path}/auth/forgot`, {
-        email,
-      });
-
-      const { message } = response.data;
-      setMessage(message);
-      showToastSuccess(message);
-    } catch (error: any) {
-      let errorMessage = "An error occurred. Please try again.";
-      if (
-        error.response &&
-        error.response.data &&
-        error.response.data.message
-      ) {
-        errorMessage = error.response.data.message;
-      }
-      showToastError(errorMessage);
-      setMessage(errorMessage);
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    if (token) {
+      getUserdetail();
     }
-  };
-
+  }, [token]);
   const getUserdetail = async () => {
     try {
       const response = await axios.get(`${path}/auth/getuser`, {
@@ -253,42 +229,6 @@ const Context = ({ children }: Props) => {
     }
   };
 
-  // const handleUpdate = async (e: React.FormEvent<HTMLFormElement>) => {
-  //   e.preventDefault();
-  //   if (!user) {
-  //     showToastError("User not found. Please log in again.");
-  //     return;
-  //   }
-
-
-  //   try {
-  //     const response = await axios.put(
-  //       `${path}/auth/updateuser`,
-  //       { name: user.name,status,password,newPassword },
-  //       { headers: { Authorization: `Bearer ${token}` } }
-  //     );
-  //     setUser(response.data);
-  //     showToastSuccess("User updated successfully.");
-  //   } catch (error: any) {
-  //     let errorMessage = "An error occurred. Please try again.";
-
-  //     if (
-  //       error.response &&
-  //       error.response.data &&
-  //       error.response.data.message
-  //     ) {
-  //       errorMessage = error.response.data.message;
-  //     }
-
-  //     showToastError(errorMessage);
-
-  //     setMessage(errorMessage);
-  //   }
-  // };
-
-
-
-
   const handleUpdate = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!user) {
@@ -304,15 +244,16 @@ const Context = ({ children }: Props) => {
       );
 
       setUser(response.data.user);
+      // getUserdetail();
       showToastSuccess("User updated successfully.");
       setPassword("");
-      setNewPassword(""); 
+      setNewPassword("");
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message || "An error occurred. Please try again.";
+      const errorMessage =
+        error.response?.data?.message || "An error occurred. Please try again.";
       showToastError(errorMessage);
     }
   };
-
 
   const fetchUsers = useEffect(() => {
     const fetchUser = async () => {
@@ -332,7 +273,7 @@ const Context = ({ children }: Props) => {
     if (!receiverId || typeof receiverId !== "object" || !receiverId._id) {
       return;
     }
-    setMessageload(true)
+    setMessageload(true);
     try {
       // setLoading(true);
       const response = await axios.get(
@@ -345,6 +286,7 @@ const Context = ({ children }: Props) => {
       );
 
       setMessages(response.data);
+      setMessageload(false);
     } catch (error) {
       console.error("Error fetching messages:", error);
     } finally {
@@ -372,37 +314,10 @@ const Context = ({ children }: Props) => {
       fetchMessages();
     } catch (error) {
       console.error("Error sending message:", error);
-    }
-    finally {
+    } finally {
       setSendmsgload(false);
     }
   };
-
-  // const handleResetPassword = async (e: React.FormEvent<HTMLFormElement>) => {
-  //     e.preventDefault();
-  //     setLoading(true);
-
-  //     if (!token) {
-  //         toast.error("Invalid or missing reset token.");
-  //         setLoading(false);
-  //         return;
-  //     }
-
-  //     try {
-  //         const response = await axios.post(`${path}/auth/forgot/${token}`, { password });
-
-  //         showToastSuccess(response.data.message);
-
-  //         setPassword("");
-
-  //         setTimeout(() => navigate("/login"), 2000);
-  //     } catch (error) {
-  //         let errorMessage = error.response?.data?.message || "Error resetting password";
-  //         showToastError(errorMessage);
-  //     } finally {
-  //         setLoading(false);
-  //     }
-  // };
 
   return (
     <ChatContext.Provider
@@ -415,7 +330,8 @@ const Context = ({ children }: Props) => {
         setEmail,
         password,
         setPassword,
-        newPassword,setNewPassword,
+        newPassword,
+        setNewPassword,
         user,
         setUser,
         loading,
@@ -439,8 +355,11 @@ const Context = ({ children }: Props) => {
         setNewMessage,
         handleSendMessage,
         fetchMessages,
-        status, setStatus,
-        sendmsgload, setSendmsgload,
+        status,
+        setStatus,
+        sendmsgload,
+        setSendmsgload,
+        messgaeload,
       }}
     >
       {children}

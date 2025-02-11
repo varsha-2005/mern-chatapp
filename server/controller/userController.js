@@ -3,18 +3,18 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/userModel.js");
 
 const profileImages = [
-  "../images/avatar1.jpg",
-  "../images/avatar2.jpg",
-  "../images/avatar3.jpg",
-  "../images/avatar4.jpg",
-  "../images/avatar5.jpg",
-  "../images/avatar6.jpg",
-  "../images/avatar7.jpg",
-  "../images/avatar8.jpg",
-  "../images/avatar9.jpg",
-  "../images/avatar10.jpg",
+  "/avatar1.jpg",
+  "/avatar2.jpg",
+  "/avatar3.jpg",
+  "/avatar4.jpg",
+  "/avatar5.jpg",
+  "/avatar6.jpg",
+  "/avatar7.jpg",
+  "/avatar8.jpg",
+  "/avatar9.jpg",
+  "/avatar10.jpg",
 ];
-console.log(profileImages)
+console.log(profileImages);
 const registerUser = async (req, res) => {
   try {
     const { name, email, password } = req.body;
@@ -23,9 +23,15 @@ const registerUser = async (req, res) => {
       return res.status(400).json({ message: "User already exists" });
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
-    const randomIndex = Math.floor(Math.random()*profileImages.length);
-    const avatarUrl = profileImages[randomIndex]
-    const newUser = new User({ name, email, password: hashedPassword,avatarUrl });
+    const randomIndex = Math.floor(Math.random() * profileImages.length);
+    const avatarUrl = profileImages[randomIndex];
+
+    const newUser = new User({
+      name,
+      email,
+      password: hashedPassword,
+      avatarUrl,
+    });
     await newUser.save();
     const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET, {
       expiresIn: "7d",
@@ -84,8 +90,6 @@ const updateUser = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    console.log("Before update:", user.password);
-
     if (password && newPassword) {
       const isMatch = await bcrypt.compare(password, user.password);
       if (!isMatch) {
@@ -93,19 +97,19 @@ const updateUser = async (req, res) => {
       }
       user.password = await bcrypt.hash(newPassword, 10);
     }
-    const updatedUser = await User.findByIdAndUpdate(
-      req.user,
-      { name, status, password: user.password },
-      { new: true }
-    );
 
-    res.json({ message: "User updated successfully", updatedUser });
+    if (name) user.name = name;
+    if (status) user.status = status;
+
+    await user.save();
+
+    res.json({ message: "User updated successfully", user });
   } catch (error) {
-    res.status(500).json({ message: "Error updating user", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error updating user", error: error.message });
   }
 };
-
-
 
 // const updateUser = async (req, res) => {
 //   try {
@@ -131,7 +135,7 @@ const updateUser = async (req, res) => {
 //     await user.save();
 //     console.log("User ID from token:", req.user);
 //     res.json({message: "User updated successfully", user})
-   
+
 //   } catch (error) {
 //     res.status(500).json({ message: "Error updating user" });
 //   }

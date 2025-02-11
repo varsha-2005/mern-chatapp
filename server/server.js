@@ -2,7 +2,9 @@ require("dotenv").config();
 
 const express = require("express");
 const cors = require("cors");
+
 const connectDB = require("./config/db.js");
+
 const userRoutes = require("./routes/userRoutes");
 const messageRoutes = require("./routes/messageRoutes.js");
 
@@ -11,6 +13,7 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+app.use(express.static("public"));
 
 app.use("/api/auth", userRoutes);
 app.use("/api/chat", messageRoutes);

@@ -44,7 +44,7 @@ const Member = ({
               onClick={() => setReceiverId(user)}
               className={`flex items-center p-3 rounded-lg hover:bg-blue-50 dark:hover:bg-gray-700 transition cursor-pointer  shadow-md darK:shadow-lg border-gray-200 dark:border-gray-700 ${
                 receiverId && receiverId._id == user._id
-                  ? "border-l-4 border-purple-500 dark:border-blue-600"
+                  ? "border-l-4 border-purple-500 dark:border-blue-500"
                   : ""
               }`}
             >
