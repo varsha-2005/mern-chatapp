@@ -5,7 +5,7 @@ import axios from "axios";
 import "react-toastify/dist/ReactToastify.css";
 
 const Settings = () => {
-  const { user, setUser, getUserdetail, handleUpdate } = useChat();
+  const { user, setUser, getUserdetail, handleUpdate, status, setStatus,password,setPassword,newPassword,setNewPassword } = useChat();
   const [image, setImage] = useState<File | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
 
@@ -90,20 +90,27 @@ const Settings = () => {
           />
           <input
             type="text"
-            value=""
-            placeholder="Hey there I'm using What's App"
+            value={status || user?.status || ""}
+            onChange={(e) => setStatus(e.target.value)}
+            placeholder="Hey there! I'm using this app"
             className="px-4 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-gray-400 w-full text-gray-900 dark:text-gray-100 transition"
           />
           <input
             type="password"
             placeholder="Enter the old password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
             className="px-4 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-gray-400 w-full text-gray-900 dark:text-gray-100 transition"
           />
+
           <input
             type="password"
             placeholder="Enter the new password"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
             className="px-4 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-gray-400 w-full text-gray-900 dark:text-gray-100 transition"
           />
+
 
           <button
             type="submit"

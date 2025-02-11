@@ -39,7 +39,7 @@ const Header = () => {
         <div className="flex items-center space-x-4">
           <button
             onClick={toggleDarkMode}
-            className="bg-gray-200 dark:bg-gray-700 text-black dark:text-white p-2 rounded-lg"
+            className="p-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-black dark:text-yellow-400 transition duration-300"
           >
             <FontAwesomeIcon icon={darkMode ? faSun : faMoon} />
           </button>
@@ -59,9 +59,8 @@ const Header = () => {
                             bg-gradient-to-b from-purple-500 to-indigo-600 dark:from-gray-800 dark:to-gray-800  
                             text-white dark:text-gray-200 text-2xl font-extrabold  
                              p-4 border-gray-300 dark:border-gray-700 opacity-90
-                            transition-transform duration-300 ease-in-out ${
-                              toggle ? "translate-x-0" : "-translate-x-full"
-                            }`}
+                            transition-transform duration-300 ease-in-out ${toggle ? "translate-x-0" : "-translate-x-full"
+          }`}
       >
         <ul className="">
           <li className="border dark:border-gray-500 rounded-full w-16 h-16 flex items-center justify-center">

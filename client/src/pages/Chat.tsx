@@ -9,7 +9,7 @@ import {
 import { ToastContainer } from "react-toastify";
 
 const Chat = ({ receiverId }: { receiverId: string | null }) => {
-  const { handleSendMessage, messages, loading, setReceiverId, fetchMessages } =
+  const { handleSendMessage, messages, loading, setReceiverId, fetchMessages, sendmsgload, setSendmsgload } =
     useChat();
   const isSmallScreen = window.innerWidth < 768;
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
@@ -22,10 +22,13 @@ const Chat = ({ receiverId }: { receiverId: string | null }) => {
   };
 
   useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollTop = messagesEndRef.current.scrollHeight;
-    }
-  }, [messages]);
+    if (!messagesEndRef.current || scroll) return;
+
+    messagesEndRef.current.scrollTo({
+      top: messagesEndRef.current.scrollHeight,
+      behavior: "smooth",
+    });
+  }, [messages, scroll]);
 
   useEffect(() => {
     const container = messagesEndRef.current;
@@ -33,7 +36,7 @@ const Chat = ({ receiverId }: { receiverId: string | null }) => {
 
     const handleScroll = () => {
       const atBottom =
-        container.scrollHeight - container.scrollTop ===
+        container.scrollHeight - container.scrollTop <=
         container.clientHeight + 50;
       setScroll(!atBottom);
     };
@@ -41,12 +44,6 @@ const Chat = ({ receiverId }: { receiverId: string | null }) => {
     container.addEventListener("scroll", handleScroll);
     return () => container.removeEventListener("scroll", handleScroll);
   }, []);
-
-  useEffect(() => {
-    if (!messagesEndRef.current || scroll) return;
-
-    messagesEndRef.current.scrollTop = messagesEndRef.current.scrollHeight;
-  }, [messages]);
 
   if (messages.length == 0)
     return (
@@ -58,9 +55,12 @@ const Chat = ({ receiverId }: { receiverId: string | null }) => {
   const SendMessage = (e) => {
     if (e.key === "Enter" || e.type === "click") {
       if (currentMessage !== "") {
-        handleSendMessage(currentMessage);
-        setCurrentMessage("");
-        fetchMessages();
+        setSendmsgload(true);
+        handleSendMessage(currentMessage).then(() => {
+          setSendmsgload(false);
+          setCurrentMessage("");
+          fetchMessages();
+        });
       } else {
         alert("Please enter a message");
       }
@@ -68,13 +68,13 @@ const Chat = ({ receiverId }: { receiverId: string | null }) => {
   };
 
   return (
-    <div className=" h-screen bg-white dark:bg-gray-900  shadow-lg border border-gray-200 dark:border-gray-700  flex flex-col">
+    <div className="h-screen bg-white dark:bg-gray-900 shadow-lg border border-gray-200 dark:border-gray-700 flex flex-col">
       {loading && (
         <div className="absolute inset-0 flex items-center justify-center bg-gray-800 bg-opacity-60 z-50">
           <div className="w-16 h-16 border-4 border-blue-500 border-dashed rounded-full animate-spin"></div>
         </div>
       )}
-      <div className="flex items-center justify-between p-4 border-b border-gray-300  dark:border-gray-500 bg-gray-100 dark:bg-gray-800   ">
+      <div className="flex items-center justify-between p-4 border-b border-gray-300 dark:border-gray-500 bg-gray-100 dark:bg-gray-800">
         {isSmallScreen && (
           <button
             className="mr-3 text-2xl text-gray-700 dark:text-gray-100"
@@ -84,16 +84,13 @@ const Chat = ({ receiverId }: { receiverId: string | null }) => {
           </button>
         )}
         <div
-          className="h-12 w-12 rounded-full bg-gray-300 dark:bg-gray-800  border flex items-center "
+          className="h-12 w-12 rounded-full bg-gray-300 dark:bg-gray-800 border flex items-center"
           onClick={handleToggle}
         >
           {toggle && (
             <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50 z-50">
               <div className="relative bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg w-80 sm:w-96 border border-gray-300 dark:border-gray-700">
-                {/* Close Button */}
                 <FontAwesomeIcon icon={faX} />
-
-                {/* User Info */}
                 <div className="flex flex-col items-center space-y-3">
                   <img
                     src={receiverId?.avatarUrl || "vite.svg"}
@@ -132,22 +129,24 @@ const Chat = ({ receiverId }: { receiverId: string | null }) => {
         </div>
       </div>
 
-      <div className="p-4 space-y-3 overflow-y-auto flex-grow w-full bg-gray-50 dark:bg-gray-800 ">
+      {/* Attach messagesEndRef to the messages container */}
+      <div
+        ref={messagesEndRef}
+        className="p-4 space-y-3 overflow-y-auto flex-grow w-full bg-gray-50 dark:bg-gray-800"
+      >
         {messages.map((msg, idx) => (
           <div
             key={idx}
-            className={`flex ${
-              msg.receiver._id === receiverId?._id
-                ? "justify-end"
-                : "justify-start"
-            }`}
+            className={`flex ${msg.receiver._id === receiverId?._id
+              ? "justify-end"
+              : "justify-start"
+              }`}
           >
             <div
-              className={`p-3 rounded-lg shadow-md max-w-xs sm:max-w-md ${
-                msg.receiver._id === receiverId?._id
-                  ? "bg-blue-500 dark:bg-blue-600 text-white"
-                  : "bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
-              }`}
+              className={`p-3 rounded-lg shadow-md max-w-xs sm:max-w-md ${msg.receiver._id === receiverId?._id
+                ? "bg-blue-500 dark:bg-blue-600 text-white"
+                : "bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+                }`}
             >
               <p className="break-words whitespace-pre-wrap overflow-auto max-h-32">
                 {msg.message}
@@ -160,20 +159,24 @@ const Chat = ({ receiverId }: { receiverId: string | null }) => {
         ))}
       </div>
 
-      <div className="p-4 border-t bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 flex items-center space-x-3 rounded-b-xl ">
+      <div className="p-4 border-t bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 flex items-center space-x-3 rounded-b-xl">
         <input
           type="text"
           value={currentMessage}
           onKeyDown={(e) => SendMessage(e)}
           onChange={(e) => setCurrentMessage(e.target.value)}
           placeholder="Type your message..."
-          className="p-2  sm:w-[85%] w-[80%] border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-gray-400 transition bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+          className="p-2 sm:w-[85%] w-[80%] border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-gray-400 transition bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
         />
         <button
           onClick={(e) => SendMessage(e)}
-          className=" sm:w-[15%] w-[20%]  text-white bg-green-500 dark:bg-green-600 p-2 px-4 rounded-md hover:bg-green-600 dark:hover:bg-green-700 transition "
+          className="sm:w-[15%] w-[20%] text-white bg-green-500 dark:bg-green-600 p-2 px-4 rounded-md hover:bg-green-600 dark:hover:bg-green-700 transition flex items-center justify-center"
         >
-          Send
+          {sendmsgload ? (
+            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+          ) : (
+            "Send"
+          )}
         </button>
       </div>
       <ToastContainer />

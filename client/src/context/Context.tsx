@@ -68,10 +68,16 @@ const Context = ({ children }: Props) => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [receiverId, setReceiverId] = useState<User | null>(null);
+  // const [chatload,setChatload]=useState(false);
+  const [messgaeload, setMessageload] = useState(false);
+  const [sendmsgload, setSendmsgload] = useState(false);
 
   const [users, setUsers] = useState<User[]>([]);
   const [search, setSearch] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [status, setStatus] = useState<string | null>(null);
+  const [newPassword, setNewPassword] = useState("");
+
 
   const [newMessage, setNewMessage] = useState("");
   const [darkMode, setDarkMode] = useState(() => {
@@ -115,7 +121,9 @@ const Context = ({ children }: Props) => {
     setMessage("");
 
     try {
-      const response = await axios.post(`${path}/auth/register`);
+      const response = await axios.post(`${path}/auth/register`, {
+        name, email, password
+      });
 
       const { token, message } = response.data;
       setMessage(message);
@@ -245,36 +253,66 @@ const Context = ({ children }: Props) => {
     }
   };
 
+  // const handleUpdate = async (e: React.FormEvent<HTMLFormElement>) => {
+  //   e.preventDefault();
+  //   if (!user) {
+  //     showToastError("User not found. Please log in again.");
+  //     return;
+  //   }
+
+
+  //   try {
+  //     const response = await axios.put(
+  //       `${path}/auth/updateuser`,
+  //       { name: user.name,status,password,newPassword },
+  //       { headers: { Authorization: `Bearer ${token}` } }
+  //     );
+  //     setUser(response.data);
+  //     showToastSuccess("User updated successfully.");
+  //   } catch (error: any) {
+  //     let errorMessage = "An error occurred. Please try again.";
+
+  //     if (
+  //       error.response &&
+  //       error.response.data &&
+  //       error.response.data.message
+  //     ) {
+  //       errorMessage = error.response.data.message;
+  //     }
+
+  //     showToastError(errorMessage);
+
+  //     setMessage(errorMessage);
+  //   }
+  // };
+
+
+
+
   const handleUpdate = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!user) {
       showToastError("User not found. Please log in again.");
       return;
     }
+
     try {
       const response = await axios.put(
         `${path}/auth/updateuser`,
-        { name: user.name },
+        { name: user.name, status, password, newPassword },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setUser(response.data);
+
+      setUser(response.data.user);
       showToastSuccess("User updated successfully.");
+      setPassword("");
+      setNewPassword(""); 
     } catch (error: any) {
-      let errorMessage = "An error occurred. Please try again.";
-
-      if (
-        error.response &&
-        error.response.data &&
-        error.response.data.message
-      ) {
-        errorMessage = error.response.data.message;
-      }
-
+      const errorMessage = error.response?.data?.message || "An error occurred. Please try again.";
       showToastError(errorMessage);
-
-      setMessage(errorMessage);
     }
   };
+
 
   const fetchUsers = useEffect(() => {
     const fetchUser = async () => {
@@ -294,6 +332,7 @@ const Context = ({ children }: Props) => {
     if (!receiverId || typeof receiverId !== "object" || !receiverId._id) {
       return;
     }
+    setMessageload(true)
     try {
       // setLoading(true);
       const response = await axios.get(
@@ -309,7 +348,7 @@ const Context = ({ children }: Props) => {
     } catch (error) {
       console.error("Error fetching messages:", error);
     } finally {
-      // setLoading(false); // Ensure loading is stopped after fetching messages
+      setMessageload(false);
     }
   };
 
@@ -323,6 +362,7 @@ const Context = ({ children }: Props) => {
       return;
     }
     if (!currentMessage || !token || !receiverId) return;
+    setSendmsgload(true);
     try {
       const response = await axios.post(`${path}/chat/sendmessages`, {
         receiver: receiverId._id,
@@ -332,6 +372,9 @@ const Context = ({ children }: Props) => {
       fetchMessages();
     } catch (error) {
       console.error("Error sending message:", error);
+    }
+    finally {
+      setSendmsgload(false);
     }
   };
 
@@ -372,6 +415,7 @@ const Context = ({ children }: Props) => {
         setEmail,
         password,
         setPassword,
+        newPassword,setNewPassword,
         user,
         setUser,
         loading,
@@ -395,6 +439,8 @@ const Context = ({ children }: Props) => {
         setNewMessage,
         handleSendMessage,
         fetchMessages,
+        status, setStatus,
+        sendmsgload, setSendmsgload,
       }}
     >
       {children}
