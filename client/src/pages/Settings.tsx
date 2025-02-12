@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useChat } from "../context/Context";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -87,11 +87,15 @@ const Settings = () => {
 
           <button
             type="submit"
-            onClick={handleUpdate}
+            onClick={(e:any) => {
+              e.preventDefault(); 
+              handleUpdate(e); 
+            }}
             className="w-full py-2 rounded-md bg-gradient-to-r from-pink-500 to-purple-500 text-white font-medium hover:opacity-90 transition"
           >
             Update
           </button>
+
         </form>
       </div>
       <ToastContainer />

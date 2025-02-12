@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { User } from "../context/Context";
 import { useChat } from "../context/Context";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -8,14 +9,15 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { ToastContainer } from "react-toastify";
 
-const Chat = ({ receiverId }: { receiverId: string | null }) => {
+
+
+const Chat = ({ receiverId }: { receiverId: User | null }) => {
   const {
     handleSendMessage,
     messages,
-    loading,
     setReceiverId,
     fetchMessages,
-    messgaeload,
+    messageload,
   } = useChat();
   const isSmallScreen = window.innerWidth < 768;
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
@@ -58,7 +60,7 @@ const Chat = ({ receiverId }: { receiverId: string | null }) => {
   //     </div>
   //   );
 
-  const SendMessage = (e) => {
+  const SendMessage = (e:any) => {
     if (e.key === "Enter" || e.type === "click") {
       if (currentMessage !== "") {
         handleSendMessage(currentMessage);
@@ -72,55 +74,57 @@ const Chat = ({ receiverId }: { receiverId: string | null }) => {
 
   return (
     <div className="h-screen bg-white dark:bg-gray-900 shadow-lg border border-gray-200 dark:border-gray-700 flex flex-col">
-      {loading && (
+      {messageload && (
         <div className="absolute inset-0 flex items-center justify-center bg-gray-800 bg-opacity-60 z-50">
           <div className="w-16 h-16 border-4 border-blue-500 border-dashed rounded-full animate-spin"></div>
         </div>
       )}
       <div className="flex items-center justify-between p-4 border-b border-gray-300 dark:border-gray-500 bg-gray-100 dark:bg-gray-800">
-        {isSmallScreen && (
-          <button
-            className="mr-3 text-2xl text-gray-700 dark:text-gray-100"
-            onClick={() => setReceiverId(null)}
+        <div className="flex">
+          {isSmallScreen && (
+            <button
+              className="mr-3 text-2xl text-gray-700 dark:text-gray-100"
+              onClick={() => setReceiverId(null)}
+            >
+              <FontAwesomeIcon icon={faArrowLeft} />
+            </button>
+          )}
+          <div
+            className="h-12 w-12 rounded-full bg-gray-300 dark:bg-gray-800 border flex items-center"
+            onClick={handleToggle}
           >
-            <FontAwesomeIcon icon={faArrowLeft} />
-          </button>
-        )}
-        <div
-          className="h-12 w-12 rounded-full bg-gray-300 dark:bg-gray-800 border flex items-center"
-          onClick={handleToggle}
-        >
-          {toggle && (
-            <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50 z-50">
-              <div className="relative bg-white rounded-lg dark:bg-gray-800 p-6  shadow-lg w-80 sm:w-96 border border-gray-300 dark:border-gray-700 ">
-                <FontAwesomeIcon icon={faX} />
-                <div className="flex flex-col items-center space-y-3 rounded-full">
-                  <img
-                    src={receiverId?.avatarUrl || "vite.svg"}
-                    alt="User Avatar"
-                    className="w-20 h-20 rounded-full object-cover border "
-                  />
-                  <div className="text-lg font-semibold text-gray-700 dark:text-gray-100">
-                    {receiverId?.name || "User"}
-                  </div>
-                  <div className="text-gray-600 dark:text-gray-300">
-                    {receiverId?.email || "No email"}
-                  </div>
-                  <div className="text-gray-500 dark:text-gray-400">
-                    {receiverId?.status || "No status available"}
+            {toggle && (
+              <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50 z-50">
+                <div className="relative bg-white rounded-lg dark:bg-gray-800 p-6  shadow-lg w-80 sm:w-96 border border-gray-300 dark:border-gray-700 ">
+                  <FontAwesomeIcon icon={faX} />
+                  <div className="flex flex-col items-center space-y-3 rounded-full">
+                    <img
+                      src={receiverId?.avatarUrl || "vite.svg"}
+                      alt="User Avatar"
+                      className="w-20 h-20 rounded-full object-cover border "
+                    />
+                    <div className="text-lg font-semibold text-gray-700 dark:text-gray-100">
+                      {receiverId?.name || "User"}
+                    </div>
+                    <div className="text-gray-600 dark:text-gray-300">
+                      {receiverId?.email || "No email"}
+                    </div>
+                    <div className="text-gray-500 dark:text-gray-400">
+                      {receiverId?.status || "No status available"}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
 
-          <img
-            src={receiverId?.avatarUrl || "vite.svg"}
-            alt="User Avatar"
-            className="w-full h-full object-cover rounded-full"
-          />
-          <div className="ml-3 text-lg font-semibold text-gray-700 dark:text-gray-100">
-            {receiverId?.name || "User"}
+            <img
+              src={receiverId?.avatarUrl || "vite.svg"}
+              alt="User Avatar"
+              className="w-full h-full object-cover rounded-full"
+            />
+            <div className="ml-3 text-lg font-semibold text-gray-700 dark:text-gray-100">
+              {receiverId?.name || "User"}
+            </div>
           </div>
         </div>
 
@@ -140,18 +144,16 @@ const Chat = ({ receiverId }: { receiverId: string | null }) => {
         {messages.map((msg, idx) => (
           <div
             key={idx}
-            className={`flex ${
-              msg.receiver._id === receiverId?._id
+            className={`flex ${msg.receiver._id === receiverId?._id
                 ? "justify-end"
                 : "justify-start"
-            }`}
+              }`}
           >
             <div
-              className={`p-3 rounded-lg shadow-md max-w-xs sm:max-w-md ${
-                msg.receiver._id === receiverId?._id
+              className={`p-3 rounded-lg shadow-md max-w-xs sm:max-w-md ${msg.receiver._id === receiverId?._id
                   ? "bg-blue-500 dark:bg-blue-600 text-white"
                   : "bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
-              }`}
+                }`}
             >
               <p className="break-words whitespace-pre-wrap overflow-auto max-h-32">
                 {msg.message}

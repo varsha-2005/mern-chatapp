@@ -53,10 +53,7 @@ export default function Login() {
                         {loading ? "Logging In..." : "Log In"}
                     </button>
 
-                    <Link to="/forgot" className="text-red-500 text-center hover:underline">
-                        Forgot Password?
-                    </Link>
-
+                    
                     <p className="text-center text-sm mt-4 text-gray-600 dark:text-gray-400">
                         Don’t have an account?{" "}
                         <Link to="/signup" className="text-blue-500 font-medium cursor-pointer hover:underline">

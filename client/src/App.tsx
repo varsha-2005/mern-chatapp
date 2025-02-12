@@ -6,7 +6,6 @@ import Login from './pages/Login';
 import Layout from './Outlet/Layout';
 import Main from './pages/Main';
 import Settings from './pages/Settings';
-import ForgotPassword from './pages/ForgotPassword';
 import ProtectedRoute from './pages/ProtectedRoute';
 
 function App() {
@@ -17,7 +16,6 @@ function App() {
       <Routes>
         <Route path='/signup' element={<Signup />} />
         <Route path='/login' element={<Login />} />
-        <Route path='/forgot' element={<ForgotPassword />} />
         <Route path='/' element={<ProtectedRoute />}  >
           <Route path='/' element={<Layout />} >
             <Route index element={<Main />} />

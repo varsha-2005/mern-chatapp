@@ -4,11 +4,12 @@ import axios from "axios";
 import { showToastSuccess, showToastError } from "../components/toast";
 import "react-toastify/dist/ReactToastify.css";
 
-interface User {
+export interface User {
   _id: string;
   name: string;
   email: string;
   avatarUrl?: string;
+  status?: string;
 }
 
 interface Message {
@@ -16,6 +17,8 @@ interface Message {
   senderId: string;
   content: string;
   timestamp: Date;
+  receiver: User;
+  message:String;
 }
 
 interface ChatContextType {
@@ -27,6 +30,8 @@ interface ChatContextType {
   setEmail: React.Dispatch<React.SetStateAction<string>>;
   password: string;
   setPassword: React.Dispatch<React.SetStateAction<string>>;
+  newPassword: string;  
+  setNewPassword: React.Dispatch<React.SetStateAction<string>>;
   user: User | null;
   setUser: React.Dispatch<React.SetStateAction<User | null>>;
   loading: boolean;
@@ -46,10 +51,16 @@ interface ChatContextType {
   handleUpdate: (e: React.FormEvent<HTMLFormElement>) => Promise<void>;
   newMessage: string;
   setNewMessage: React.Dispatch<React.SetStateAction<string>>;
-  handleSendMessage: any;
-  fetchMessages: any;
+  handleSendMessage: (message: string) => Promise<void>;
+  fetchMessages: () => Promise<void>;
   toggleDarkMode: () => void;
   handleLogout: () => void;
+  status: string | null;
+  setStatus: React.Dispatch<React.SetStateAction<string | null>>;
+  darkMode?: boolean;
+  messageload: boolean;
+  sendmsgload:boolean;
+  setSendmsgload: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 type Props = {
@@ -68,8 +79,7 @@ const Context = ({ children }: Props) => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [receiverId, setReceiverId] = useState<User | null>(null);
-  // const [chatload,setChatload]=useState(false);
-  const [messgaeload, setMessageload] = useState(false);
+  const [messageload, setMessageload] = useState(false);
   const [sendmsgload, setSendmsgload] = useState(false);
 
   const [users, setUsers] = useState<User[]>([]);
@@ -176,12 +186,12 @@ const Context = ({ children }: Props) => {
         password,
       });
 
-      const newTken = response.data.token;
+      const newToken = response.data.token;
       const message = response.data.message;
       setMessage(message);
 
-      localStorage.setItem("token", newTken);
-      setToken(newTken);
+      localStorage.setItem("token", newToken);
+      setToken(newToken);
       axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
       navigate("/");
 
@@ -286,7 +296,7 @@ const Context = ({ children }: Props) => {
       );
 
       setMessages(response.data);
-      setMessageload(false);
+      // setMessageload(false);
     } catch (error) {
       console.error("Error fetching messages:", error);
     } finally {
@@ -296,7 +306,7 @@ const Context = ({ children }: Props) => {
 
   useEffect(() => {
     fetchMessages();
-  }, [token, receiverId, messages]);
+  }, [token, receiverId,]);
 
   const handleSendMessage = async (currentMessage: string) => {
     if (!currentMessage.trim()) {
@@ -359,7 +369,7 @@ const Context = ({ children }: Props) => {
         setStatus,
         sendmsgload,
         setSendmsgload,
-        messgaeload,
+        messageload,
       }}
     >
       {children}
