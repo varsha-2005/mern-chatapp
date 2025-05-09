@@ -1,10 +1,16 @@
-import { createContext, useState, useContext, useEffect, useCallback, useRef } from "react";
+import {
+  createContext,
+  useState,
+  useContext,
+  useEffect,
+  useCallback,
+  useRef,
+} from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { io, Socket } from "socket.io-client";
 import { showToastSuccess, showToastError } from "../components/toast";
 import "react-toastify/dist/ReactToastify.css";
-
 
 export interface User {
   _id: string;
@@ -103,7 +109,8 @@ type Props = {
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
 
 const Context = ({ children }: Props) => {
-  const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:5001";
+  const backendUrl =
+    import.meta.env.VITE_BACKEND_URL || "http://localhost:5001";
   const apiPath = `${backendUrl}/api`;
   const navigate = useNavigate();
   const typingTimeoutRef = useRef<NodeJS.Timeout>();
@@ -112,7 +119,7 @@ const Context = ({ children }: Props) => {
   // State
   const [socket, setSocket] = useState<Socket | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>({
-    isConnected: false
+    isConnected: false,
   });
   const [onlineUsers, setOnlineUsers] = useState<string[]>([]);
   const [isTyping, setIsTyping] = useState(false);
@@ -138,12 +145,10 @@ const Context = ({ children }: Props) => {
   });
   const [token, setToken] = useState(localStorage.getItem("token"));
 
-
   const checkConnection = useCallback(async (): Promise<boolean> => {
     if (!socket) return false;
     return socket.connected;
   }, [socket]);
-
 
   useEffect(() => {
     if (!token || !user?._id) return;
@@ -154,7 +159,7 @@ const Context = ({ children }: Props) => {
       reconnectionAttempts: Infinity,
       reconnectionDelay: 1000,
       transports: ["websocket"],
-      query: { userId: user._id }
+      query: { userId: user._id },
     });
 
     setSocket(newSocket);
@@ -165,17 +170,23 @@ const Context = ({ children }: Props) => {
     };
 
     const onMessage = (newMessage: SocketMessage) => {
-      setMessages(prev => {
-        const exists = prev.some(m => 
-          m._id === newMessage._id || 
-          (m.isOptimistic && m.timestamp === newMessage.timestamp)
+      setMessages((prev) => {
+        const exists = prev.some(
+          (m) =>
+            m._id === newMessage._id ||
+            (m.isOptimistic && m.timestamp === newMessage.timestamp)
         );
-        
-        return exists ? prev : [...prev, {
-          ...newMessage,
-          id: newMessage._id,
-          isReceived: newMessage.senderId !== user?._id
-        }];
+
+        return exists
+          ? prev
+          : [
+              ...prev,
+              {
+                ...newMessage,
+                id: newMessage._id,
+                isReceived: newMessage.senderId !== user?._id,
+              },
+            ];
       });
     };
 
@@ -191,7 +202,7 @@ const Context = ({ children }: Props) => {
 
     newSocket.on("connect", onConnect);
     newSocket.on("disconnect", () => {
-      setConnectionStatus(prev => ({ ...prev, isConnected: false }));
+      setConnectionStatus((prev) => ({ ...prev, isConnected: false }));
       showToastError("Connection lost - reconnecting...");
     });
     newSocket.on("msg-receive", onMessage);
@@ -200,7 +211,7 @@ const Context = ({ children }: Props) => {
 
     pingIntervalRef.current = setInterval(() => {
       if (newSocket.connected) {
-        setConnectionStatus(prev => ({ ...prev, lastPing: new Date() }));
+        setConnectionStatus((prev) => ({ ...prev, lastPing: new Date() }));
       }
     }, 15000);
 
@@ -215,29 +226,31 @@ const Context = ({ children }: Props) => {
     };
   }, [token, user?._id, receiverId?._id]);
 
+  const handleTyping = useCallback(
+    (isTyping: boolean) => {
+      if (!socket || !receiverId?._id || !user?._id) return;
 
-  const handleTyping = useCallback((isTyping: boolean) => {
-    if (!socket || !receiverId?._id || !user?._id) return;
-  
-    socket.emit("typing", {
-      senderId: user._id,
-      receiverId: receiverId._id,
-      isTyping
-    });
-  
-    if (typingTimeoutRef.current) {
-      clearTimeout(typingTimeoutRef.current);
-    }
-  
-    if (isTyping) {
-      typingTimeoutRef.current = setTimeout(() => {
-        handleTyping(false);
-      }, 2000);
-    }
-  }, [socket, receiverId?._id, user?._id]);
+      socket.emit("typing", {
+        senderId: user._id,
+        receiverId: receiverId._id,
+        isTyping,
+      });
+
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+
+      if (isTyping) {
+        typingTimeoutRef.current = setTimeout(() => {
+          handleTyping(false);
+        }, 2000);
+      }
+    },
+    [socket, receiverId?._id, user?._id]
+  );
 
   const toggleDarkMode = useCallback(() => {
-    setDarkMode(prev => {
+    setDarkMode((prev) => {
       const newMode = !prev;
       localStorage.setItem("darkMode", JSON.stringify(newMode));
       document.documentElement.classList.toggle("dark", newMode);
@@ -245,20 +258,19 @@ const Context = ({ children }: Props) => {
     });
   }, []);
 
- 
   const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setMessage("");
 
     try {
-      const response = await axios.post(`${apiPath}/auth/register`, { 
-        name, 
-        email, 
-        password 
+      const response = await axios.post(`${apiPath}/auth/register`, {
+        name,
+        email,
+        password,
       });
       const { token: newToken, message: successMessage } = response.data;
-      
+
       localStorage.setItem("token", newToken);
       setName("");
       setEmail("");
@@ -266,7 +278,8 @@ const Context = ({ children }: Props) => {
       showToastSuccess(successMessage);
       setTimeout(() => navigate("/login"), 1000);
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message || "Registration failed";
+      const errorMessage =
+        error.response?.data?.message || "Registration failed";
       showToastError(errorMessage);
       setMessage(errorMessage);
     } finally {
@@ -280,12 +293,12 @@ const Context = ({ children }: Props) => {
     setMessage("");
 
     try {
-      const response = await axios.post(`${apiPath}/auth/login`, { 
-        email, 
-        password 
+      const response = await axios.post(`${apiPath}/auth/login`, {
+        email,
+        password,
       });
       const { token: newToken, user: userData } = response.data;
-      
+
       localStorage.setItem("token", newToken);
       setToken(newToken);
       setUser(userData);
@@ -318,7 +331,7 @@ const Context = ({ children }: Props) => {
   const getUserdetail = useCallback(async () => {
     try {
       const response = await axios.get(`${apiPath}/auth/getuser`, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
       setUser(response.data);
     } catch (error) {
@@ -330,7 +343,7 @@ const Context = ({ children }: Props) => {
   const fetchUsers = useCallback(async () => {
     try {
       const response = await axios.get(`${apiPath}/auth/fetchuser`, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
       setUsers(response.data);
     } catch (error) {
@@ -367,20 +380,25 @@ const Context = ({ children }: Props) => {
 
     setMessageload(true);
     try {
-      const response = await axios.get(`${apiPath}/chat/messages/${receiverId._id}`, {
-        headers: { 
-          Authorization: `Bearer ${token}`,
-          'Cache-Control': 'no-cache'
+      const response = await axios.get(
+        `${apiPath}/chat/messages/${receiverId._id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Cache-Control": "no-cache",
+          },
         }
-      });
-      
-      setMessages(response.data?.map((msg: any) => ({
-        ...msg,
-        id: msg._id,
-        senderId: msg.sender._id,
-        receiver: msg.receiver,
-        isReceived: msg.sender._id !== user?._id
-      })) || []);
+      );
+
+      setMessages(
+        response.data?.map((msg: any) => ({
+          ...msg,
+          id: msg._id,
+          senderId: msg.sender._id,
+          receiver: msg.receiver,
+          isReceived: msg.sender._id !== user?._id,
+        })) || []
+      );
     } catch (error) {
       console.error("Failed to fetch messages:", error);
       setMessages([]);
@@ -389,64 +407,75 @@ const Context = ({ children }: Props) => {
     }
   }, [receiverId?._id, token, user?._id]);
 
-  const handleSendMessage = useCallback(async (currentMessage: string) => {
-    if (!currentMessage.trim() || !receiverId?._id || !user?._id) return;
-  
-    const tempId = Date.now().toString();
-    
-    const optimisticMessage = {
-      id: tempId,
-      _id: tempId,
-      senderId: user._id,
-      content: currentMessage,
-      timestamp: new Date(),
-      receiver: receiverId,
-      message: currentMessage,
-      isOptimistic: true,
-      sender: user,
-      isReceived: false
-    };
-    
-    setMessages(prev => [...prev, optimisticMessage]);
-    setNewMessage("");
-    handleTyping(false);
-  
-    try {
-      const response = await axios.post(`${apiPath}/chat/sendmessages`, {
-        receiver: receiverId._id,
+  const handleSendMessage = useCallback(
+    async (currentMessage: string) => {
+      if (!currentMessage.trim() || !receiverId?._id || !user?._id) return;
+
+      const tempId = Date.now().toString();
+
+      const optimisticMessage = {
+        id: tempId,
+        _id: tempId,
+        senderId: user._id,
+        content: currentMessage,
+        timestamp: new Date(),
+        receiver: receiverId,
         message: currentMessage,
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+        isOptimistic: true,
+        sender: user,
+        isReceived: false,
+      };
 
-      setMessages(prev => prev.map(m => 
-        m.id === tempId ? {
-          ...response.data,
-          id: response.data._id,
-          senderId: user._id,
-          receiver: receiverId,
-          sender: user,
-          isOptimistic: undefined
-        } : m
-      ));
+      setMessages((prev) => [...prev, optimisticMessage]);
+      setNewMessage("");
+      handleTyping(false);
 
-      // Also send via socket if available
-      if (socket?.connected && response.data?._id) {
-        socket.emit("send-msg", {
-          to: receiverId._id,
-          from: user._id,
-          message: currentMessage,
-          _id: response.data._id,
-          sender: user,
-          timestamp: new Date()
-        });
+      try {
+        const response = await axios.post(
+          `${apiPath}/chat/sendmessages`,
+          {
+            receiver: receiverId._id,
+            message: currentMessage,
+          },
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === tempId
+              ? {
+                  ...response.data,
+                  id: response.data._id,
+                  senderId: user._id,
+                  receiver: receiverId,
+                  sender: user,
+                  isOptimistic: undefined,
+                }
+              : m
+          )
+        );
+
+        // Also send via socket if available
+        if (socket?.connected && response.data?._id) {
+          socket.emit("send-msg", {
+            to: receiverId._id,
+            from: user._id,
+            message: currentMessage,
+            _id: response.data._id,
+            sender: user,
+            timestamp: new Date(),
+          });
+        }
+      } catch (error) {
+        console.error("Send failed:", error);
+        setMessages((prev) => prev.filter((m) => m.id !== tempId));
+        showToastError("Failed to send message");
       }
-    } catch (error) {
-      console.error("Send failed:", error);
-      setMessages(prev => prev.filter(m => m.id !== tempId));
-      showToastError("Failed to send message");
-    }
-  }, [receiverId, user, socket, token, handleTyping]);
+    },
+    [receiverId, user, socket, token, handleTyping]
+  );
 
   // Initial Data Loading
   useEffect(() => {
@@ -454,8 +483,6 @@ const Context = ({ children }: Props) => {
       axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
       getUserdetail();
       fetchUsers();
-    } else if (window.location.pathname !== "/register") {
-      navigate("/login");
     }
   }, [token, getUserdetail, fetchUsers, navigate]);
 
@@ -466,7 +493,7 @@ const Context = ({ children }: Props) => {
         fetchMessages();
       }
     }, 100);
-    
+
     return () => clearTimeout(timer);
   }, [token, receiverId?._id]);
 
@@ -521,7 +548,7 @@ const Context = ({ children }: Props) => {
         isTyping,
         handleTyping,
         connectionStatus,
-        checkConnection
+        checkConnection,
       }}
     >
       {children}

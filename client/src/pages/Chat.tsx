@@ -2,7 +2,11 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { User } from "../context/Context";
 import { useChat } from "../context/Context";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowLeft, faArrowsRotate, faX } from "@fortawesome/free-solid-svg-icons";
+import {
+  faArrowLeft,
+  faArrowsRotate,
+  faX,
+} from "@fortawesome/free-solid-svg-icons";
 import { ToastContainer } from "react-toastify";
 
 const Chat = ({ receiverId }: { receiverId: User | null }) => {
@@ -15,7 +19,7 @@ const Chat = ({ receiverId }: { receiverId: User | null }) => {
     messageload,
     isTyping,
     handleTyping,
-    fetchMessages
+    fetchMessages,
   } = useChat();
 
   const isSmallScreen = window.innerWidth < 768;
@@ -26,13 +30,14 @@ const Chat = ({ receiverId }: { receiverId: User | null }) => {
   const [isAtBottom, setIsAtBottom] = useState(true);
 
   // Scroll handling
-  const scrollToBottom = useCallback((behavior: ScrollBehavior = 'smooth') => {
+  const scrollToBottom = useCallback((behavior: ScrollBehavior = "smooth") => {
     messagesEndRef.current?.scrollIntoView({ behavior });
   }, []);
 
   const checkScrollPosition = useCallback(() => {
     if (!messagesContainerRef.current) return;
-    const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
+    const { scrollTop, scrollHeight, clientHeight } =
+      messagesContainerRef.current;
     setIsAtBottom(scrollHeight - (scrollTop + clientHeight) < 50);
   }, []);
 
@@ -40,33 +45,36 @@ const Chat = ({ receiverId }: { receiverId: User | null }) => {
     const container = messagesContainerRef.current;
     if (!container) return;
 
-    container.addEventListener('scroll', checkScrollPosition);
-    return () => container.removeEventListener('scroll', checkScrollPosition);
+    container.addEventListener("scroll", checkScrollPosition);
+    return () => container.removeEventListener("scroll", checkScrollPosition);
   }, [checkScrollPosition]);
 
   // Scroll to bottom when messages change
   useEffect(() => {
     if (isAtBottom) {
-      scrollToBottom('auto');
+      scrollToBottom("auto");
     }
   }, [messages, isAtBottom, scrollToBottom]);
 
   // Initial scroll
   useEffect(() => {
     if (receiverId) {
-      setTimeout(() => scrollToBottom('auto'), 100);
+      setTimeout(() => scrollToBottom("auto"), 100);
     }
   }, [receiverId, scrollToBottom]);
 
-  const handleSend = useCallback((e: React.KeyboardEvent | React.MouseEvent) => {
-    if ((e as React.KeyboardEvent).key === 'Enter' || e.type === 'click') {
-      if (currentMessage.trim()) {
-        handleSendMessage(currentMessage);
-        setCurrentMessage("");
-        handleTyping(false);
+  const handleSend = useCallback(
+    (e: React.KeyboardEvent | React.MouseEvent) => {
+      if ((e as React.KeyboardEvent).key === "Enter" || e.type === "click") {
+        if (currentMessage.trim()) {
+          handleSendMessage(currentMessage);
+          setCurrentMessage("");
+          handleTyping(false);
+        }
       }
-    }
-  }, [currentMessage, handleSendMessage, handleTyping]);
+    },
+    [currentMessage, handleSendMessage, handleTyping]
+  );
 
   return (
     <div className="h-screen bg-white dark:bg-gray-900 shadow-lg border border-gray-200 dark:border-gray-700 flex flex-col">
@@ -81,11 +89,17 @@ const Chat = ({ receiverId }: { receiverId: User | null }) => {
       <div className="flex items-center justify-between p-4 border-b border-gray-300 dark:border-gray-500 bg-gray-100 dark:bg-gray-800">
         <div className="flex items-center">
           {isSmallScreen && (
-            <button onClick={() => setReceiverId(null)} className="mr-3 text-2xl">
+            <button
+              onClick={() => setReceiverId(null)}
+              className="mr-3 text-2xl"
+            >
               <FontAwesomeIcon icon={faArrowLeft} />
             </button>
           )}
-          <div className="flex items-center cursor-pointer" onClick={() => setToggle(true)}>
+          <div
+            className="flex items-center cursor-pointer"
+            onClick={() => setToggle(true)}
+          >
             <div className="h-12 w-12 rounded-full bg-gray-300 dark:bg-gray-800 border flex items-center">
               <img
                 src={receiverId?.avatarUrl || "default-avatar.png"}
@@ -94,18 +108,30 @@ const Chat = ({ receiverId }: { receiverId: User | null }) => {
               />
             </div>
             <div className="ml-3">
-              <div className="text-lg font-semibold text-gray-700 dark:text-gray-100">{receiverId?.name}</div>
+              <div className="text-lg font-semibold text-gray-700 dark:text-gray-100">
+                {receiverId?.name}
+              </div>
               <div className="flex items-center">
-                <span className={`h-2 w-2 rounded-full mr-1 ${onlineUsers.includes(receiverId?._id || '') ? 'bg-green-500' : 'bg-gray-500'
-                  }`}></span>
+                <span
+                  className={`h-2 w-2 rounded-full mr-1 ${
+                    onlineUsers.includes(receiverId?._id || "")
+                      ? "bg-green-500"
+                      : "bg-gray-500"
+                  }`}
+                ></span>
                 <span className="text-xs font-semibold text-gray-700 dark:text-gray-100">
-                  {onlineUsers.includes(receiverId?._id || '') ? 'Online' : 'Offline'}
+                  {onlineUsers.includes(receiverId?._id || "")
+                    ? "Online"
+                    : "Offline"}
                 </span>
               </div>
             </div>
           </div>
         </div>
-        <button onClick={fetchMessages} className="text-gray-700 dark:text-gray-100">
+        <button
+          onClick={fetchMessages}
+          className="text-gray-700 dark:text-gray-100"
+        >
           <FontAwesomeIcon icon={faArrowsRotate} />
         </button>
       </div>
@@ -116,14 +142,27 @@ const Chat = ({ receiverId }: { receiverId: User | null }) => {
         className="flex-grow p-4 overflow-y-auto bg-gray-50 dark:bg-gray-800"
       >
         {messages.map((msg) => (
-          <div key={msg._id || msg.id} className={`flex ${msg.senderId === user?._id ? "justify-end" : "justify-start"} mb-3`}>
-            <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${msg.senderId === user?._id
-                ? "bg-blue-500 dark:bg-blue-600 text-white"
-                : "bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
-              } ${msg.isOptimistic ? "opacity-80" : ""}`}>
-              <p className="break-words whitespace-pre-wrap overflow-auto max-h-32">{msg.message}</p>
+          <div
+            key={msg._id || msg.id}
+            className={`flex ${
+              msg.senderId === user?._id ? "justify-end" : "justify-start"
+            } mb-3`}
+          >
+            <div
+              className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                msg.senderId === user?._id
+                  ? "bg-blue-500 dark:bg-blue-600 text-white"
+                  : "bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+              } ${msg.isOptimistic ? "opacity-80" : ""}`}
+            >
+              <p className="break-words whitespace-pre-wrap overflow-auto max-h-32">
+                {msg.message}
+              </p>
               <p className="text-xs opacity-80 text-right mt-1">
-                {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                {new Date(msg.timestamp).toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
                 {msg.isOptimistic && " (Sending...)"}
               </p>
             </div>
@@ -135,8 +174,14 @@ const Chat = ({ receiverId }: { receiverId: User | null }) => {
             <div className="bg-gray-200 dark:bg-gray-700 px-4 py-2 rounded-lg inline-flex items-center">
               <div className="flex space-x-1">
                 <div className="w-2 h-2 bg-gray-500 dark:bg-gray-300 rounded-full animate-bounce"></div>
-                <div className="w-2 h-2 bg-gray-500 dark:bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                <div className="w-2 h-2 bg-gray-500 dark:bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+                <div
+                  className="w-2 h-2 bg-gray-500 dark:bg-gray-300 rounded-full animate-bounce"
+                  style={{ animationDelay: "0.2s" }}
+                ></div>
+                <div
+                  className="w-2 h-2 bg-gray-500 dark:bg-gray-300 rounded-full animate-bounce"
+                  style={{ animationDelay: "0.4s" }}
+                ></div>
               </div>
             </div>
           </div>
@@ -145,7 +190,7 @@ const Chat = ({ receiverId }: { receiverId: User | null }) => {
       </div>
 
       {/* Input area */}
-      <div className="p-4 border-t bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700">
+      <div className="p-4 border-t bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-100">
         <div className="flex space-x-2">
           <input
             type="text"
@@ -174,7 +219,10 @@ const Chat = ({ receiverId }: { receiverId: User | null }) => {
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg w-11/12 max-w-md">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold">Profile</h2>
-              <button onClick={() => setToggle(false)} className="text-gray-500 hover:text-gray-700">
+              <button
+                onClick={() => setToggle(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
                 <FontAwesomeIcon icon={faX} />
               </button>
             </div>
@@ -185,8 +233,12 @@ const Chat = ({ receiverId }: { receiverId: User | null }) => {
                 className="w-24 h-24 rounded-full mb-4"
               />
               <h3 className="text-lg font-semibold">{receiverId.name}</h3>
-              <p className="text-gray-600 dark:text-gray-300">{receiverId.email}</p>
-              <p className="text-gray-500 dark:text-gray-400 mt-2">{receiverId.status || "No status"}</p>
+              <p className="text-gray-600 dark:text-gray-300">
+                {receiverId.email}
+              </p>
+              <p className="text-gray-500 dark:text-gray-400 mt-2">
+                {receiverId.status || "No status"}
+              </p>
             </div>
           </div>
         </div>
@@ -196,7 +248,7 @@ const Chat = ({ receiverId }: { receiverId: User | null }) => {
       {!isAtBottom && (
         <button
           onClick={() => scrollToBottom()}
-          className="fixed bottom-20 right-4 bg-blue-500 text-white p-2 rounded-full shadow-lg"
+          className="fixed bottom-20 right-4 bg-blue-500 text-white h-10 w-10  rounded-full shadow-lg text-center"
         >
           ↓
         </button>

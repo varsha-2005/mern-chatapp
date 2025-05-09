@@ -38,7 +38,7 @@ const Settings = () => {
   }, []);
 
   const handleAvatarChange = (avatarUrl: string) => {
-    setUser(prev => ({ ...prev, avatarUrl }));
+    setUser((prev) => ({ ...prev, avatarUrl }));
     setShowAvatarSelector(false);
   };
 
@@ -56,8 +56,8 @@ const Settings = () => {
 
   return (
     <div className="h-screen px-6 flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-900 transition overflow-hidden">
-      <div className="w-full max-w-md rounded-lg shadow-lg dark:bg-gray-800 border border-gray-200 dark:border-gray-700 transition">
-        <div className="flex justify-between items-center p-4 border-b border-gray-300 dark:border-gray-700">
+      <div className="w-full max-w-md rounded-lg shadow-lg dark:bg-gray-800 border border-gray-200 dark:border-gray-700 transition h-[700px]">
+        <div className="flex justify-between items-center p-4 border-b border-gray-300 dark:border-gray-700 ">
           <h1 className="text-xl font-semibold text-gray-700 dark:text-gray-100">
             Profile Settings
           </h1>
@@ -138,9 +138,8 @@ const Settings = () => {
             </label>
             <input
               type="text"
-              value={status || user?.status || ""}
+              placeholder={status || user?.status || ""}
               onChange={(e) => setStatus(e.target.value)}
-              placeholder="Tell something about yourself"
               className="w-full px-4 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-gray-400 text-gray-900 dark:text-gray-100 transition"
             />
           </div>
