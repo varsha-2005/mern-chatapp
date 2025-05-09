@@ -38,6 +38,7 @@ const registerUser = async (req, res) => {
     });
     res.status(201).json({ message: "User registered", token });
   } catch (err) {
+    console.error(err); 
     res.status(500).json({ message: "Error registering user" });
   }
 };
@@ -81,33 +82,45 @@ const getUser = async (req, res) => {
   }
 };
 
+
 const updateUser = async (req, res) => {
   try {
-    const { name, status, password, newPassword } = req.body;
+    const { name, status, password, newPassword, avatarUrl } = req.body;
     const user = await User.findById(req.user);
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    if (password && newPassword) {
-      const isMatch = await bcrypt.compare(password, user.password);
-      if (!isMatch) {
-        return res.status(400).json({ message: "Incorrect current password" });
-      }
-      user.password = await bcrypt.hash(newPassword, 10);
-    }
 
     if (name) user.name = name;
     if (status) user.status = status;
+    if (avatarUrl) user.avatarUrl = avatarUrl;
+
+    if (password && newPassword) {
+      const isMatch = await bcrypt.compare(password, user.password);
+      if (!isMatch) {
+        return res.status(400).json({ message: "Current password is incorrect" });
+      }
+      const salt = await bcrypt.genSalt(10);
+      user.password = await bcrypt.hash(newPassword, salt);
+    }
 
     await user.save();
 
-    res.json({ message: "User updated successfully", user });
+    const userToReturn = user.toObject();
+    delete userToReturn.password;
+
+    res.json({ 
+      message: "User updated successfully", 
+      user: userToReturn 
+    });
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Error updating user", error: error.message });
+    console.error("Update error:", error);
+    res.status(500).json({ 
+      message: "Error updating user", 
+      error: error.message 
+    });
   }
 };
 

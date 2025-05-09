@@ -4,10 +4,8 @@ import Chat from "./Chat";
 import Member from "./Member";
 
 const Main = () => {
-  const { receiverId, setReceiverId } = useChat();
-  const [isSmallScreen, setIsSmallScreen] = useState<boolean>(
-    window.innerWidth < 768
-  );
+  const { receiverId } = useChat();
+  const [isSmallScreen, setIsSmallScreen] = useState(window.innerWidth < 768);
 
   useEffect(() => {
     const handleResize = () => {
@@ -18,27 +16,34 @@ const Main = () => {
   }, []);
 
   return (
-    <div className="flex w-full  ">
+    <div className="flex h-screen w-full overflow-hidden">
+      {/* Member List */}
       <div
         className={`${
           isSmallScreen && receiverId ? "hidden" : "block"
-        } w-full lg:w-[40%]`}
+        } w-full md:w-1/3 lg:w-1/4 border-r border-gray-200 dark:border-gray-700`}
       >
-        <Member setReceiverId={setReceiverId} receiverId={receiverId} />
+        <Member />
       </div>
 
+      {/* Chat Area */}
       <div
         className={`${
-          isSmallScreen && !receiverId ? "hidden" : "block"
-        } flex w-full`}
+          isSmallScreen && !receiverId ? "hidden" : "flex"
+        } flex-1 min-w-0 flex-col`}
       >
         {receiverId ? (
-          <div className="w-full h-screen">
-            <Chat receiverId={receiverId} />
-          </div>
+          <Chat receiverId={receiverId} />
         ) : (
-          <div className="text-center flex justify-center items-center w-full dark:text-gray-100 text-gray-500 h-screen bg-[#f9f6f6] dark:bg-gray-800">
-            Select a user to start chatting
+          <div className="flex-1 flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+            <div className="text-center p-6">
+              <h2 className="text-xl font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Select a conversation
+              </h2>
+              <p className="text-gray-500 dark:text-gray-400">
+                Choose a contact to start chatting
+              </p>
+            </div>
           </div>
         )}
       </div>

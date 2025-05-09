@@ -1,8 +1,10 @@
-import { createContext, useState, useContext, useEffect } from "react";
+import { createContext, useState, useContext, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { io, Socket } from "socket.io-client";
 import { showToastSuccess, showToastError } from "../components/toast";
 import "react-toastify/dist/ReactToastify.css";
+
 
 export interface User {
   _id: string;
@@ -14,11 +16,36 @@ export interface User {
 
 interface Message {
   id: string;
+  _id?: string;
   senderId: string;
   content: string;
   timestamp: Date;
   receiver: User;
-  message:String;
+  message: string;
+  isOptimistic?: boolean;
+  sender?: User;
+  isReceived?: boolean;
+}
+
+interface SocketMessage {
+  _id: string;
+  senderId: string;
+  receiverId: string;
+  message: string;
+  timestamp: Date;
+  sender: User;
+  receiver: User;
+}
+
+interface TypingEvent {
+  senderId: string;
+  receiverId: string;
+  isTyping: boolean;
+}
+
+interface ConnectionStatus {
+  isConnected: boolean;
+  lastPing?: Date;
 }
 
 interface ChatContextType {
@@ -30,7 +57,7 @@ interface ChatContextType {
   setEmail: React.Dispatch<React.SetStateAction<string>>;
   password: string;
   setPassword: React.Dispatch<React.SetStateAction<string>>;
-  newPassword: string;  
+  newPassword: string;
   setNewPassword: React.Dispatch<React.SetStateAction<string>>;
   user: User | null;
   setUser: React.Dispatch<React.SetStateAction<User | null>>;
@@ -47,7 +74,7 @@ interface ChatContextType {
   error: string | null;
   setError: React.Dispatch<React.SetStateAction<string | null>>;
   getUserdetail: () => Promise<void>;
-  fetchUsers: void;
+  fetchUsers: () => Promise<void>;
   handleUpdate: (e: React.FormEvent<HTMLFormElement>) => Promise<void>;
   newMessage: string;
   setNewMessage: React.Dispatch<React.SetStateAction<string>>;
@@ -57,10 +84,16 @@ interface ChatContextType {
   handleLogout: () => void;
   status: string | null;
   setStatus: React.Dispatch<React.SetStateAction<string | null>>;
-  darkMode?: boolean;
+  darkMode: boolean;
   messageload: boolean;
-  sendmsgload:boolean;
+  sendmsgload: boolean;
   setSendmsgload: React.Dispatch<React.SetStateAction<boolean>>;
+  socket: Socket | null;
+  onlineUsers: string[];
+  isTyping: boolean;
+  handleTyping: (isTyping: boolean) => void;
+  connectionStatus: ConnectionStatus;
+  checkConnection: () => Promise<boolean>;
 }
 
 type Props = {
@@ -68,9 +101,21 @@ type Props = {
 };
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
-const Context = ({ children }: Props) => {
-  const path = "http://localhost:5001/api";
 
+const Context = ({ children }: Props) => {
+  const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:5001";
+  const apiPath = `${backendUrl}/api`;
+  const navigate = useNavigate();
+  const typingTimeoutRef = useRef<NodeJS.Timeout>();
+  const pingIntervalRef = useRef<NodeJS.Timeout>();
+
+  // State
+  const [socket, setSocket] = useState<Socket | null>(null);
+  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>({
+    isConnected: false
+  });
+  const [onlineUsers, setOnlineUsers] = useState<string[]>([]);
+  const [isTyping, setIsTyping] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -81,253 +126,353 @@ const Context = ({ children }: Props) => {
   const [receiverId, setReceiverId] = useState<User | null>(null);
   const [messageload, setMessageload] = useState(false);
   const [sendmsgload, setSendmsgload] = useState(false);
-
   const [users, setUsers] = useState<User[]>([]);
   const [search, setSearch] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [newPassword, setNewPassword] = useState("");
-
   const [newMessage, setNewMessage] = useState("");
   const [darkMode, setDarkMode] = useState(() => {
     const savedDarkMode = localStorage.getItem("darkMode");
     return savedDarkMode ? JSON.parse(savedDarkMode) : false;
   });
-
-  const toggleDarkMode = () => {
-    setDarkMode((prevMode: any) => {
-      const newMode = !prevMode;
-      localStorage.setItem("darkMode", JSON.stringify(newMode));
-      return newMode;
-    });
-  };
-
-  useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
-  }, [darkMode]);
-
-  const navigate = useNavigate();
   const [token, setToken] = useState(localStorage.getItem("token"));
 
+
+  const checkConnection = useCallback(async (): Promise<boolean> => {
+    if (!socket) return false;
+    return socket.connected;
+  }, [socket]);
+
+
   useEffect(() => {
-    if (token !== "") {
-      axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-    } else {
-      delete axios.defaults.headers.common["Authorization"];
-      if (location.pathname !== "/register") {
-        navigate("/login");
+    if (!token || !user?._id) return;
+
+    const newSocket = io(backendUrl, {
+      auth: { token },
+      reconnection: true,
+      reconnectionAttempts: Infinity,
+      reconnectionDelay: 1000,
+      transports: ["websocket"],
+      query: { userId: user._id }
+    });
+
+    setSocket(newSocket);
+
+    const onConnect = () => {
+      console.log("Socket connected");
+      setConnectionStatus({ isConnected: true, lastPing: new Date() });
+    };
+
+    const onMessage = (newMessage: SocketMessage) => {
+      setMessages(prev => {
+        const exists = prev.some(m => 
+          m._id === newMessage._id || 
+          (m.isOptimistic && m.timestamp === newMessage.timestamp)
+        );
+        
+        return exists ? prev : [...prev, {
+          ...newMessage,
+          id: newMessage._id,
+          isReceived: newMessage.senderId !== user?._id
+        }];
+      });
+    };
+
+    const onOnlineUsers = (users: string[]) => {
+      setOnlineUsers(users);
+    };
+
+    const onTyping = (data: TypingEvent) => {
+      if (receiverId?._id === data.senderId) {
+        setIsTyping(data.isTyping);
       }
+    };
+
+    newSocket.on("connect", onConnect);
+    newSocket.on("disconnect", () => {
+      setConnectionStatus(prev => ({ ...prev, isConnected: false }));
+      showToastError("Connection lost - reconnecting...");
+    });
+    newSocket.on("msg-receive", onMessage);
+    newSocket.on("online-users", onOnlineUsers);
+    newSocket.on("typing", onTyping);
+
+    pingIntervalRef.current = setInterval(() => {
+      if (newSocket.connected) {
+        setConnectionStatus(prev => ({ ...prev, lastPing: new Date() }));
+      }
+    }, 15000);
+
+    return () => {
+      if (pingIntervalRef.current) clearInterval(pingIntervalRef.current);
+      newSocket.off("connect", onConnect);
+      newSocket.off("disconnect");
+      newSocket.off("msg-receive", onMessage);
+      newSocket.off("online-users", onOnlineUsers);
+      newSocket.off("typing", onTyping);
+      newSocket.disconnect();
+    };
+  }, [token, user?._id, receiverId?._id]);
+
+
+  const handleTyping = useCallback((isTyping: boolean) => {
+    if (!socket || !receiverId?._id || !user?._id) return;
+  
+    socket.emit("typing", {
+      senderId: user._id,
+      receiverId: receiverId._id,
+      isTyping
+    });
+  
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
     }
+  
+    if (isTyping) {
+      typingTimeoutRef.current = setTimeout(() => {
+        handleTyping(false);
+      }, 2000);
+    }
+  }, [socket, receiverId?._id, user?._id]);
+
+  const toggleDarkMode = useCallback(() => {
+    setDarkMode(prev => {
+      const newMode = !prev;
+      localStorage.setItem("darkMode", JSON.stringify(newMode));
+      document.documentElement.classList.toggle("dark", newMode);
+      return newMode;
+    });
   }, []);
 
+ 
   const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setMessage("");
 
     try {
-      const response = await axios.post(`${path}/auth/register`, {
-        name,
-        email,
-        password,
+      const response = await axios.post(`${apiPath}/auth/register`, { 
+        name, 
+        email, 
+        password 
       });
-
-      const { token, message } = response.data;
-      setMessage(message);
-
-      localStorage.setItem("token", token);
-
+      const { token: newToken, message: successMessage } = response.data;
+      
+      localStorage.setItem("token", newToken);
       setName("");
       setEmail("");
       setPassword("");
-      showToastSuccess(message);
-      setTimeout(() => {
-        navigate("/login");
-      }, 1000);
+      showToastSuccess(successMessage);
+      setTimeout(() => navigate("/login"), 1000);
     } catch (error: any) {
-      let errorMessage = "An error occurred. Please try again.";
-
-      if (
-        error.response &&
-        error.response.data &&
-        error.response.data.message
-      ) {
-        errorMessage = error.response.data.message;
-      }
-
+      const errorMessage = error.response?.data?.message || "Registration failed";
       showToastError(errorMessage);
-
       setMessage(errorMessage);
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-
-    setUser(null);
-    setToken(null);
-    axios.defaults.headers.common["Authorization"] = "";
-    navigate("/login");
   };
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setMessage("");
+
     try {
-      const response = await axios.post(`${path}/auth/login`, {
-        email,
-        password,
+      const response = await axios.post(`${apiPath}/auth/login`, { 
+        email, 
+        password 
       });
-
-      const newToken = response.data.token;
-      const message = response.data.message;
-      setMessage(message);
-
+      const { token: newToken, user: userData } = response.data;
+      
       localStorage.setItem("token", newToken);
       setToken(newToken);
-      axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+      setUser(userData);
+      axios.defaults.headers.common["Authorization"] = `Bearer ${newToken}`;
+      showToastSuccess("Logged in successfully");
       navigate("/");
-
-      showToastSuccess("Logged in successfully.");
-      setTimeout(() => {
-        navigate("/");
-      }, 2000);
     } catch (error: any) {
-      let errorMessage = "An error occurred. Please try again.";
-
-      if (
-        error.response &&
-        error.response.data &&
-        error.response.data.message
-      ) {
-        errorMessage = error.response.data.message;
-      }
-
+      const errorMessage = error.response?.data?.message || "Login failed";
       showToastError(errorMessage);
-
       setMessage(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    if (token) {
-      getUserdetail();
+  const handleLogout = useCallback(() => {
+    if (socket) {
+      socket.disconnect();
+      setSocket(null);
+    }
+    localStorage.removeItem("token");
+    setUser(null);
+    setToken(null);
+    setMessages([]);
+    setReceiverId(null);
+    axios.defaults.headers.common["Authorization"] = "";
+    navigate("/login");
+  }, [socket, navigate]);
+
+  const getUserdetail = useCallback(async () => {
+    try {
+      const response = await axios.get(`${apiPath}/auth/getuser`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setUser(response.data);
+    } catch (error) {
+      console.error("Failed to fetch user details:", error);
+      handleLogout();
+    }
+  }, [token, handleLogout]);
+
+  const fetchUsers = useCallback(async () => {
+    try {
+      const response = await axios.get(`${apiPath}/auth/fetchuser`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setUsers(response.data);
+    } catch (error) {
+      console.error("Failed to fetch users:", error);
+      setError("Failed to load users");
     }
   }, [token]);
-  const getUserdetail = async () => {
-    try {
-      const response = await axios.get(`${path}/auth/getuser`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      console.log("User Data:", response.data);
-      setUser(response.data);
-      setLoading(false);
-    } catch (error) {
-      console.log(error);
-      setLoading(false);
-    }
-  };
 
   const handleUpdate = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!user) {
-      showToastError("User not found. Please log in again.");
-      return;
-    }
+    if (!user) return;
 
     try {
       const response = await axios.put(
-        `${path}/auth/updateuser`,
+        `${apiPath}/auth/updateuser`,
         { name: user.name, status, password, newPassword },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
       setUser(response.data.user);
-      // getUserdetail();
-      showToastSuccess("User updated successfully.");
+      showToastSuccess("Profile updated");
       setPassword("");
       setNewPassword("");
     } catch (error: any) {
-      const errorMessage =
-        error.response?.data?.message || "An error occurred. Please try again.";
+      const errorMessage = error.response?.data?.message || "Update failed";
       showToastError(errorMessage);
     }
   };
 
-  const fetchUsers = useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const response = await axios.get(`${path}/auth/fetchuser`);
-        // console.log(response.data);
-        setUsers(response.data);
-      } catch (error) {
-        console.error("Error fetching users:", error);
-        setError("An error occurred.");
-      }
-    };
-    fetchUser();
-  }, []);
-
-  const fetchMessages = async () => {
-    if (!receiverId || typeof receiverId !== "object" || !receiverId._id) {
+  const fetchMessages = useCallback(async () => {
+    if (!receiverId?._id || !token) {
+      console.log("Skipping fetch - missing IDs or token");
       return;
     }
+
     setMessageload(true);
     try {
-      // setLoading(true);
-      const response = await axios.get(
-        `${path}/chat/messages/${receiverId._id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+      const response = await axios.get(`${apiPath}/chat/messages/${receiverId._id}`, {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Cache-Control': 'no-cache'
         }
-      );
-
-      setMessages(response.data);
-      // setMessageload(false);
+      });
+      
+      setMessages(response.data?.map((msg: any) => ({
+        ...msg,
+        id: msg._id,
+        senderId: msg.sender._id,
+        receiver: msg.receiver,
+        isReceived: msg.sender._id !== user?._id
+      })) || []);
     } catch (error) {
-      console.error("Error fetching messages:", error);
+      console.error("Failed to fetch messages:", error);
+      setMessages([]);
     } finally {
       setMessageload(false);
     }
-  };
+  }, [receiverId?._id, token, user?._id]);
 
-  useEffect(() => {
-    fetchMessages();
-  }, [token, receiverId,]);
-
-  const handleSendMessage = async (currentMessage: string) => {
-    if (!currentMessage.trim()) {
-      showToastError("Please enter something!");
-      return;
-    }
-    if (!currentMessage || !token || !receiverId) return;
-    setSendmsgload(true);
+  const handleSendMessage = useCallback(async (currentMessage: string) => {
+    if (!currentMessage.trim() || !receiverId?._id || !user?._id) return;
+  
+    const tempId = Date.now().toString();
+    
+    const optimisticMessage = {
+      id: tempId,
+      _id: tempId,
+      senderId: user._id,
+      content: currentMessage,
+      timestamp: new Date(),
+      receiver: receiverId,
+      message: currentMessage,
+      isOptimistic: true,
+      sender: user,
+      isReceived: false
+    };
+    
+    setMessages(prev => [...prev, optimisticMessage]);
+    setNewMessage("");
+    handleTyping(false);
+  
     try {
-      const response = await axios.post(`${path}/chat/sendmessages`, {
+      const response = await axios.post(`${apiPath}/chat/sendmessages`, {
         receiver: receiverId._id,
         message: currentMessage,
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
       });
-      setMessages(response.data);
-      fetchMessages();
+
+      setMessages(prev => prev.map(m => 
+        m.id === tempId ? {
+          ...response.data,
+          id: response.data._id,
+          senderId: user._id,
+          receiver: receiverId,
+          sender: user,
+          isOptimistic: undefined
+        } : m
+      ));
+
+      // Also send via socket if available
+      if (socket?.connected && response.data?._id) {
+        socket.emit("send-msg", {
+          to: receiverId._id,
+          from: user._id,
+          message: currentMessage,
+          _id: response.data._id,
+          sender: user,
+          timestamp: new Date()
+        });
+      }
     } catch (error) {
-      console.error("Error sending message:", error);
-    } finally {
-      setSendmsgload(false);
+      console.error("Send failed:", error);
+      setMessages(prev => prev.filter(m => m.id !== tempId));
+      showToastError("Failed to send message");
     }
-  };
+  }, [receiverId, user, socket, token, handleTyping]);
+
+  // Initial Data Loading
+  useEffect(() => {
+    if (token) {
+      axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+      getUserdetail();
+      fetchUsers();
+    } else if (window.location.pathname !== "/register") {
+      navigate("/login");
+    }
+  }, [token, getUserdetail, fetchUsers, navigate]);
+
+  // Fetch Messages When Receiver Changes
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (token && receiverId?._id) {
+        fetchMessages();
+      }
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  }, [token, receiverId?._id]);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", darkMode);
+  }, [darkMode]);
 
   return (
     <ChatContext.Provider
@@ -355,21 +500,28 @@ const Context = ({ children }: Props) => {
         search,
         setSearch,
         error,
-        getUserdetail,
-        toggleDarkMode,
         setError,
+        getUserdetail,
         fetchUsers,
         handleUpdate,
-        handleLogout,
         newMessage,
         setNewMessage,
         handleSendMessage,
         fetchMessages,
+        toggleDarkMode,
+        handleLogout,
         status,
         setStatus,
+        darkMode,
+        messageload,
         sendmsgload,
         setSendmsgload,
-        messageload,
+        socket,
+        onlineUsers,
+        isTyping,
+        handleTyping,
+        connectionStatus,
+        checkConnection
       }}
     >
       {children}
