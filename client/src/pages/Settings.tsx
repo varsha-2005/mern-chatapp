@@ -38,11 +38,15 @@ const Settings = () => {
   }, []);
 
   const handleAvatarChange = (avatarUrl: string) => {
-    setUser((prev) => ({ ...prev, avatarUrl }));
+    setUser((prev) =>
+      prev
+        ? { ...prev, avatarUrl }
+        : null
+    );
     setShowAvatarSelector(false);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
       await handleUpdate(e);
@@ -111,7 +115,9 @@ const Settings = () => {
               type="text"
               value={user?.name || ""}
               onChange={(e) =>
-                setUser((prev) => ({ ...prev, name: e.target.value }))
+                setUser((prev) =>
+                  prev ? { ...prev, name: e.target.value } : null
+                )
               }
               className="w-full px-4 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-gray-400 text-gray-900 dark:text-gray-100 transition"
               required

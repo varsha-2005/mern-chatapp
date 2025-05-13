@@ -109,12 +109,11 @@ type Props = {
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
 
 const Context = ({ children }: Props) => {
-  const backendUrl =
-    import.meta.env.VITE_BACKEND_URL || "http://localhost:5001";
+  const backendUrl = "http://localhost:5001";
   const apiPath = `${backendUrl}/api`;
   const navigate = useNavigate();
-  const typingTimeoutRef = useRef<NodeJS.Timeout>();
-  const pingIntervalRef = useRef<NodeJS.Timeout>();
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const pingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // State
   const [socket, setSocket] = useState<Socket | null>(null);
@@ -184,6 +183,7 @@ const Context = ({ children }: Props) => {
               {
                 ...newMessage,
                 id: newMessage._id,
+                content: newMessage.message,
                 isReceived: newMessage.senderId !== user?._id,
               },
             ];
@@ -250,8 +250,8 @@ const Context = ({ children }: Props) => {
   );
 
   const toggleDarkMode = useCallback(() => {
-    setDarkMode((prev) => {
-      const newMode = !prev;
+    setDarkMode((prev: boolean): boolean => {
+      const newMode: boolean = !prev;
       localStorage.setItem("darkMode", JSON.stringify(newMode));
       document.documentElement.classList.toggle("dark", newMode);
       return newMode;
