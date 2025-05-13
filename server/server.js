@@ -19,7 +19,6 @@ const io = socketIo(server, {
   cors: {
     origin: ["https://mern-chatapp-api-psi.vercel.app"],
     methods: ["GET", "POST", "PUT", "DELETE"],
-    credentials: true,
   },
   pingInterval: 10000,
   pingTimeout: 5000,
