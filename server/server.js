@@ -14,6 +14,14 @@ const auth = require("./middeleware/auth.js");
 
 const app = express();
 const server = http.createServer(app);
+app.use(
+  cors({
+    origin: ["https://mern-chatapp-api-psi.vercel.app"],
+    credentials: true,
+
+    methods: ["GET", "POST", "PUT", "DELETE"],
+  })
+);
 
 const io = socketIo(server, {
   cors: {
@@ -126,14 +134,6 @@ io.on("connection", (socket) => {
   });
 });
 
-app.use(
-  cors({
-    origin: ["https://mern-chatapp-api-psi.vercel.app"],
-    credentials: true,
-
-    methods: ["GET", "POST", "PUT", "DELETE"],
-  })
-);
 app.use(express.json());
 app.use(express.static("public"));
 
