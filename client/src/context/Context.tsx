@@ -109,7 +109,7 @@ type Props = {
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
 
 const Context = ({ children }: Props) => {
-  const backendUrl = "http://localhost:5001";
+  const backendUrl = "https://mern-chatapp-six.vercel.app";
   const apiPath = `${backendUrl}/api`;
   const navigate = useNavigate();
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
